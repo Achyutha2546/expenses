@@ -1,9 +1,9 @@
-const CACHE_NAME = 'expense-tracker-offline-v7';
+const CACHE_NAME = 'expense-tracker-offline-v8';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/manifest.json',
-    '/vite.svg',
+    '/logo.png',
     '/src/main.jsx',
     '/src/App.jsx',
     '/src/index.css'

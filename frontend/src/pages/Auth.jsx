@@ -48,17 +48,14 @@ const Auth = () => {
             {/* Branding / Logo Area */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{
-                    width: '64px',
-                    height: '64px',
-                    background: 'linear-gradient(135deg, var(--primary), #818cf8)',
-                    borderRadius: '20px',
+                    width: '72px',
+                    height: '72px',
                     margin: '0 auto 16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)'
                 }}>
-                    <CheckCircle2 size={32} color="white" strokeWidth={2.5} />
+                    <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.5px', marginBottom: '8px' }}>
                     Expense Tracker
