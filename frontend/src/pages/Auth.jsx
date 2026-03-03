@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { LogIn, UserPlus, Mail, Lock, CheckCircle2 } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -10,6 +11,7 @@ const Auth = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -31,8 +33,18 @@ const Auth = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '24px'
+            padding: '24px',
+            position: 'relative'
         }}>
+            {/* Theme Toggle for Auth Page */}
+            <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
+                <button
+                    onClick={toggleTheme}
+                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+            </div>
             {/* Branding / Logo Area */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{
