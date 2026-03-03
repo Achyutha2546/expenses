@@ -1,6 +1,6 @@
 {
     "name": "Expense Tracker",
-    "short_name": "Expenses",
+    "short_name": "Expense Tracker",
     "description": "Premium Expense Tracker Application",
     "start_url": "/",
     "scope": "/",
