@@ -10,6 +10,7 @@ import Onboarding from './pages/Onboarding';
 import History from './pages/History';
 import Account from './pages/Account';
 import Footer from './components/Footer';
+import ReloadPrompt from './components/ReloadPrompt';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,6 +24,7 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="min-h-screen">
+            <ReloadPrompt />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route
