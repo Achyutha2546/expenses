@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['logo.png', 'vite.svg'],
+      includeAssets: ['logo.png', 'logo-192.png', 'vite.svg'],
       manifest: {
         name: 'Expense Tracker',
         short_name: 'Expenses',
