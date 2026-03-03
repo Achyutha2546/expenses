@@ -19,6 +19,9 @@ const History = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sources, setSources] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense'
+    const [showSearch, setShowSearch] = useState(false);
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -61,7 +64,16 @@ const History = () => {
         </div>
     );
 
-    const displayTransactions = transactions.filter(t => t.purpose !== 'Initial Balance Setup');
+    const displayTransactions = transactions
+        .filter(t => t.purpose !== 'Initial Balance Setup')
+        .filter(t => {
+            const matchesSearch = (t.purpose || t.source || '').toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesType = filterType === 'all' || t.type === filterType;
+            return matchesSearch && matchesType;
+        });
+
+    const incomeCategories = ['Job', 'Freelance', 'Investment', 'Other'];
+    const expenseCategories = ['Food', 'Rent', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Other'];
 
     return (
         <div className="container animate-in">
@@ -86,14 +98,67 @@ const History = () => {
                     <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>History</h1>
                 </div>
                 <div className="flex gap-2">
-                    <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
+                    <button
+                        onClick={() => setShowSearch(!showSearch)}
+                        style={{
+                            background: showSearch ? 'var(--primary)' : 'var(--glass)',
+                            color: showSearch ? 'white' : 'var(--text-primary)',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
                         <Search size={18} />
-                    </button>
-                    <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
-                        <Filter size={18} />
                     </button>
                 </div>
             </header>
+
+            {/* Search Bar - Animated */}
+            {showSearch && (
+                <div className="animate-in mb-6">
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="text"
+                            placeholder="Search transactions..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                paddingLeft: '48px',
+                                background: 'var(--bg-card)',
+                                borderRadius: '16px',
+                                border: '1px solid var(--border)'
+                            }}
+                        />
+                        <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                    </div>
+                </div>
+            )}
+
+            {/* Filter Tabs */}
+            <div className="flex gap-2 mb-6" style={{ overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+                {['all', 'income', 'expense'].map((type) => (
+                    <button
+                        key={type}
+                        onClick={() => setFilterType(type)}
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            whiteSpace: 'nowrap',
+                            background: filterType === type ? 'var(--primary)' : 'var(--glass)',
+                            color: filterType === type ? 'white' : 'var(--text-secondary)',
+                            border: '1px solid var(--border)',
+                            textTransform: 'capitalize'
+                        }}
+                    >
+                        {type}
+                    </button>
+                ))}
+            </div>
 
             {/* Quick Summary Banner */}
             <div className="glass-card mb-8" style={{ padding: '20px', borderRadius: '24px', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
