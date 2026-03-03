@@ -36,24 +36,20 @@ const Auth = () => {
             padding: '24px',
             position: 'relative'
         }}>
-            {/* Theme Toggle for Auth Page */}
-            <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
-                <button
-                    onClick={toggleTheme}
-                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-            </div>
             {/* Branding / Logo Area */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{
-                    width: '72px',
-                    height: '72px',
-                    margin: '0 auto 16px',
+                    width: '80px',
+                    height: '80px',
+                    margin: '0 auto 20px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    background: 'var(--bg-card)',
+                    borderRadius: '24px',
+                    padding: '12px',
+                    boxShadow: 'var(--shadow-premium)',
+                    border: '1px solid var(--border)'
                 }}>
                     <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
@@ -163,39 +159,6 @@ const Auth = () => {
                     </button>
                 </div>
 
-                {/* Quick Theme Switcher in Card */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                    <button
-                        onClick={() => theme !== 'light' && toggleTheme()}
-                        style={{
-                            background: theme === 'light' ? 'var(--primary)' : 'var(--glass)',
-                            color: theme === 'light' ? 'white' : 'var(--text-secondary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <Sun size={18} />
-                    </button>
-                    <button
-                        onClick={() => theme !== 'dark' && toggleTheme()}
-                        style={{
-                            background: theme === 'dark' ? 'var(--primary)' : 'var(--glass)',
-                            color: theme === 'dark' ? 'white' : 'var(--text-secondary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <Moon size={18} />
-                    </button>
-                </div>
             </div>
 
             {/* Footer Tagline */}
