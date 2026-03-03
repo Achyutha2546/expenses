@@ -7,6 +7,7 @@ import AddEntry from './pages/Transactions';
 import Sources from './pages/Sources';
 import Onboarding from './pages/Onboarding';
 import History from './pages/History';
+import Account from './pages/Account';
 import Footer from './components/Footer';
 
 const PrivateRoute = ({ children }) => {
@@ -49,6 +50,15 @@ function App() {
               element={
                 <PrivateRoute>
                   <Sources />
+                  <Footer />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <PrivateRoute>
+                  <Account />
                   <Footer />
                 </PrivateRoute>
               }
