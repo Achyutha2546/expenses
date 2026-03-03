@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../utils/api';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown } from 'lucide-react';
 
 const AddEntry = () => {
     const navigate = useNavigate();
@@ -49,11 +49,6 @@ const AddEntry = () => {
         fetchSources();
     }, [editingTransaction]);
 
-    const categories = {
-        income: ['Salary', 'Freelance', 'Gift', 'Investment', 'Other'],
-        expense: ['Food', 'Travel', 'Rent', 'Shopping', 'Bills', 'Health', 'Other']
-    };
-
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -67,7 +62,7 @@ const AddEntry = () => {
             } else {
                 await api.post('/transactions', formData);
             }
-            navigate('/history'); // return to history after edit
+            navigate('/history');
         } catch (err) {
             if (err.offline) {
                 alert(err.message);
@@ -80,86 +75,187 @@ const AddEntry = () => {
         }
     };
 
+    if (initialLoading) return (
+        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+            <div className="loader"></div>
+        </div>
+    );
+
     return (
-        <div className="container" style={{ maxWidth: '600px', paddingBottom: '80px' }}>
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 mb-4" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
-                <ArrowLeft size={20} /> Back
-            </button>
+        <div className="container animate-in">
+            {/* Header */}
+            <header className="flex items-center gap-4 mb-8">
+                <button
+                    onClick={() => navigate(-1)}
+                    style={{
+                        background: 'var(--glass)',
+                        color: 'var(--text-primary)',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <ArrowLeft size={22} />
+                </button>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                    {editingTransaction ? 'Edit Transaction' : 'New Transaction'}
+                </h1>
+            </header>
 
-            <div className="glass-card">
-                <h2 className="mb-4" style={{ fontSize: '1.5rem' }}>{editingTransaction ? 'Edit Transaction' : 'Add New Entry'}</h2>
-
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    {/* ... (rest of form) ... */}
-                    {/* I need to keep the form content intact, let's just target the header and button independently or broadly */}
-                    <div className="flex gap-4">
-                        <button
-                            type="button"
-                            className="flex-1"
-                            style={{
-                                background: formData.type === 'income' ? 'var(--income)' : 'var(--glass)',
-                                padding: '10px'
-                            }}
-                            onClick={() => setFormData({ ...formData, type: 'income', purpose: '' })}
-                        >
-                            Income
-                        </button>
-                        <button
-                            type="button"
-                            className="flex-1"
-                            style={{
-                                background: formData.type === 'expense' ? 'var(--expense)' : 'var(--glass)',
-                                padding: '10px'
-                            }}
-                            onClick={() => setFormData({ ...formData, type: 'expense', source: '' })}
-                        >
-                            Expense
-                        </button>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px' }}>Select Account / Source</label>
-                        <select name="sourceId" value={formData.sourceId} onChange={handleChange} required>
-                            {sources.length === 0 ? (
-                                <option value="">No sources found. Please add one first!</option>
-                            ) : (
-                                sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)
-                            )}
-                        </select>
-                        <Link to="/sources" style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px', display: 'inline-block' }}>
-                            + Add new source
-                        </Link>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px' }}>Amount (₹)</label>
-                        <input name="amount" type="number" value={formData.amount} onChange={handleChange} required placeholder="0.00" />
-                    </div>
-
-                    {formData.type === 'income' ? (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>Source</label>
-                            <input name="source" type="text" value={formData.source} onChange={handleChange} required placeholder="Where did it come from?" />
-                        </div>
-                    ) : (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>Purpose</label>
-                            <input name="purpose" type="text" value={formData.purpose} onChange={handleChange} required placeholder="What was it for?" />
-                        </div>
-                    )}
-
-
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px' }}>Date</label>
-                        <input name="date" type="date" value={formData.date} onChange={handleChange} required />
-                    </div>
-
-                    <button type="submit" disabled={loading} className="btn-primary mt-4 flex items-center justify-center gap-2">
-                        <Save size={20} /> {loading ? 'Saving...' : (editingTransaction ? 'Update Transaction' : 'Save Transaction')}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                {/* Type Selector (Segmented Control) */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '6px',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    border: '1px solid var(--border)'
+                }}>
+                    <button
+                        type="button"
+                        className="flex-1"
+                        style={{
+                            background: formData.type === 'income' ? 'var(--income)' : 'transparent',
+                            color: formData.type === 'income' ? 'white' : 'var(--text-secondary)',
+                            padding: '12px',
+                            fontWeight: '600',
+                            borderRadius: '12px',
+                        }}
+                        onClick={() => setFormData({ ...formData, type: 'income', purpose: '' })}
+                    >
+                        Income
                     </button>
-                </form>
-            </div>
+                    <button
+                        type="button"
+                        className="flex-1"
+                        style={{
+                            background: formData.type === 'expense' ? 'var(--expense)' : 'transparent',
+                            color: formData.type === 'expense' ? 'white' : 'var(--text-secondary)',
+                            padding: '12px',
+                            fontWeight: '600',
+                            borderRadius: '12px',
+                        }}
+                        onClick={() => setFormData({ ...formData, type: 'expense', source: '' })}
+                    >
+                        Expense
+                    </button>
+                </div>
+
+                {/* Amount Section */}
+                <div className="glass-card" style={{ textAlign: 'center', padding: '32px 24px', position: 'relative' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '12px' }}>Enter Amount</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-secondary)' }}>₹</span>
+                        <input
+                            name="amount"
+                            type="number"
+                            value={formData.amount}
+                            onChange={handleChange}
+                            required
+                            placeholder="0"
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                fontSize: '3rem',
+                                fontWeight: '800',
+                                textAlign: 'left',
+                                padding: '0',
+                                width: 'auto',
+                                minWidth: '100px',
+                                maxWidth: '100%',
+                                color: 'var(--text-primary)',
+                                boxShadow: 'none'
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Input Fields Group */}
+                <div className="flex flex-col gap-4">
+                    {/* Account Source */}
+                    <div style={{ position: 'relative' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Account</label>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <Landmark size={20} />
+                            </div>
+                            <select
+                                name="sourceId"
+                                value={formData.sourceId}
+                                onChange={handleChange}
+                                required
+                                style={{ paddingLeft: '48px' }}
+                            >
+                                {sources.length === 0 ? (
+                                    <option value="">No sources found.</option>
+                                ) : (
+                                    sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)
+                                )}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Purpose / Source Text */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
+                            {formData.type === 'income' ? 'From' : 'What for?'}
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <FileText size={20} />
+                            </div>
+                            <input
+                                name={formData.type === 'income' ? 'source' : 'purpose'}
+                                type="text"
+                                value={formData.type === 'income' ? formData.source : formData.purpose}
+                                onChange={handleChange}
+                                required
+                                placeholder={formData.type === 'income' ? "Employer, Gift, etc." : "Rent, Coffee, Food..."}
+                                style={{ paddingLeft: '48px' }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Date Selector */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Date</label>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <Calendar size={20} />
+                            </div>
+                            <input
+                                name="date"
+                                type="date"
+                                value={formData.date}
+                                onChange={handleChange}
+                                required
+                                style={{ paddingLeft: '48px' }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Submit Action */}
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-primary"
+                    style={{
+                        marginTop: '12px',
+                        padding: '18px',
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        borderRadius: '18px'
+                    }}
+                >
+                    {loading ? 'Processing...' : (editingTransaction ? 'Update Entry' : 'Create Transaction')}
+                </button>
+            </form>
+
+            <div style={{ paddingBottom: '40px' }}></div>
         </div>
     );
 };

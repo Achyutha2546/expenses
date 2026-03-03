@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
-import { ArrowUpCircle, ArrowDownCircle, Trash2, PlusCircle, Edit2 } from 'lucide-react';
-
-import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import {
+    TrendingUp,
+    TrendingDown,
+    Trash2,
+    Plus,
+    Edit2,
+    Search,
+    Filter,
+    ArrowLeft,
+    Calendar,
+    Wallet
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const History = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [sources, setSources] = useState([]); // Need sources for names
-    const { user } = useAuth(); // Get user if needed, or remove if unused
+    const [sources, setSources] = useState([]);
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,58 +55,131 @@ const History = () => {
         }
     };
 
-    if (loading) return <div className="container" style={{ paddingBottom: '80px' }}>Loading...</div>;
+    if (loading) return (
+        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+            <div className="loader"></div>
+        </div>
+    );
+
+    const displayTransactions = transactions.filter(t => t.purpose !== 'Initial Balance Setup');
 
     return (
-        <div className="container" style={{ paddingBottom: '80px' }}>
-            <div className="flex justify-between items-center mb-4">
-                <h2 style={{ fontSize: '1.8rem' }}>History</h2>
-                <Link to="/add">
-                    <button className="btn-primary flex items-center gap-2">
-                        <PlusCircle size={20} /> Add
+        <div className="container animate-in">
+            {/* Header Area */}
+            <header className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/')}
+                        style={{
+                            background: 'var(--glass)',
+                            color: 'var(--text-primary)',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <ArrowLeft size={20} />
                     </button>
-                </Link>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>History</h1>
+                </div>
+                <div className="flex gap-2">
+                    <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
+                        <Search size={18} />
+                    </button>
+                    <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
+                        <Filter size={18} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Quick Summary Banner */}
+            <div className="glass-card mb-8" style={{ padding: '20px', borderRadius: '24px', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '4px' }}>Transactions</p>
+                    <p style={{ fontWeight: '700', fontSize: '1.25rem' }}>{displayTransactions.length}</p>
+                </div>
+                <div style={{ width: '1px', background: 'var(--border)', height: '24px' }}></div>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '4px' }}>Monthly Avg</p>
+                    <p style={{ fontWeight: '700', fontSize: '1.25rem' }}>₹{(displayTransactions.reduce((a, b) => a + b.amount, 0) / Math.max(1, displayTransactions.length)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-                {(() => {
-                    const displayTransactions = transactions.filter(t => t.purpose !== 'Initial Balance Setup');
-                    if (displayTransactions.length === 0) {
-                        return <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>No transactions found.</p>;
-                    }
-                    return displayTransactions.map(t => (
-                        <div key={t._id} className="glass-card flex justify-between items-center" style={{ padding: '16px 24px' }}>
-                            <div className="flex items-center gap-4">
-                                {t.type === 'income' ?
-                                    <ArrowUpCircle color="var(--income)" size={32} /> :
-                                    <ArrowDownCircle color="var(--expense)" size={32} />
-                                }
-                                <div>
-                                    <h4 style={{ fontWeight: '600' }}>{t.type === 'income' ? (t.source || 'Income') : (t.purpose || 'Expense')}</h4>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                        {sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown Source'} • {t.category ? `${t.category} • ` : ''}{new Date(t.date).toLocaleDateString()}
-                                    </p>
+            {/* Transaction List */}
+            <div className="flex flex-col gap-2">
+                {displayTransactions.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                        <Calendar size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                        <p>No records found in history.</p>
+                        <Link to="/add" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '600', marginTop: '12px', display: 'block' }}>Start adding entries</Link>
+                    </div>
+                ) : (
+                    displayTransactions.map((t, index) => {
+                        const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown';
+                        return (
+                            <div key={t._id} className="glass-card" style={{
+                                padding: '16px',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                background: 'rgba(21, 26, 45, 0.4)',
+                                marginBottom: '4px',
+                                borderRadius: '16px'
+                            }}>
+                                <div className="flex items-center gap-4">
+                                    <div style={{
+                                        width: '44px',
+                                        height: '44px',
+                                        borderRadius: '14px',
+                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : <TrendingDown size={20} color="var(--expense)" />}
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '2px' }}>
+                                            {t.type === 'income' ? (t.source || 'Income') : (t.purpose || 'Expense')}
+                                        </h4>
+                                        <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            <Wallet size={12} />
+                                            <span>{sourceName}</span>
+                                            <span>•</span>
+                                            <span>{new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{
+                                            fontWeight: '700',
+                                            fontSize: '1rem',
+                                            color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
+                                        }}>
+                                            {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                                        </p>
+                                        <div className="flex gap-3 justify-end mt-1">
+                                            <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
+                                                <Edit2 size={14} />
+                                            </Link>
+                                            <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <span style={{
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
-                                    color: t.type === 'income' ? 'var(--income)' : 'var(--expense)'
-                                }}>
-                                    {t.type === 'income' ? '+' : '-'} ₹{t.amount.toLocaleString()}
-                                </span>
-                                <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
-                                    <Edit2 size={18} />
-                                </Link>
-                                <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    ));
-                })()}
+                        );
+                    })
+                )}
             </div>
+
+            <div style={{ paddingBottom: '60px' }}></div>
         </div>
     );
 };

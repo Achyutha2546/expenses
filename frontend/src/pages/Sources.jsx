@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { Plus, Trash2, ArrowLeft, Wallet, Edit2, Save, X } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Wallet, Edit2, Save, X, CreditCard, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Sources = () => {
@@ -11,6 +11,7 @@ const Sources = () => {
     const [error, setError] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
+    const navigate = useNavigate();
 
     const handleEditClick = (source) => {
         setEditingId(source._id);
@@ -33,8 +34,6 @@ const Sources = () => {
             }
         }
     };
-
-    const navigate = useNavigate();
 
     const fetchSources = async () => {
         try {
@@ -89,86 +88,137 @@ const Sources = () => {
         }
     };
 
-    if (loading) return <div className="container">Loading...</div>;
+    if (loading) return (
+        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+            <div className="loader"></div>
+        </div>
+    );
 
     return (
-        <div className="container" style={{ maxWidth: '600px', paddingBottom: '80px' }}>
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 mb-4" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
-                <ArrowLeft size={20} /> Back
-            </button>
+        <div className="container animate-in">
+            {/* Header Area */}
+            <header className="flex items-center gap-4 mb-8">
+                <button
+                    onClick={() => navigate('/')}
+                    style={{
+                        background: 'var(--glass)',
+                        color: 'var(--text-primary)',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <ArrowLeft size={20} />
+                </button>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Sources & Wallets</h1>
+            </header>
 
-            <div className="glass-card mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                    <Wallet size={24} color="var(--primary)" />
-                    <h2 style={{ fontSize: '1.5rem' }}>Manage Sources</h2>
+            {/* Form Section */}
+            <div className="glass-card mb-8" style={{ padding: '24px', borderRadius: '24px' }}>
+                <div className="flex items-center gap-3 mb-4">
+                    <div style={{ padding: '8px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px' }}>
+                        <Plus size={20} color="var(--primary)" />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Add New Account</h3>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-                    Add accounts and their starting balances to track where your money is stored.
-                </p>
 
-                <form onSubmit={handleAdd} className="flex flex-col gap-3">
-                    <div className="flex gap-2">
+                <form onSubmit={handleAdd} className="flex flex-col gap-4">
+                    <div>
                         <input
                             type="text"
-                            placeholder="Account Name (e.g. Bank)"
+                            placeholder="Account Name (e.g. HDFC Bank)"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             required
-                            style={{ flex: 2 }}
-                        />
-                        <input
-                            type="number"
-                            placeholder="Initial Balance (₹)"
-                            value={initialBalance}
-                            onChange={(e) => setInitialBalance(e.target.value)}
-                            style={{ flex: 1 }}
                         />
                     </div>
-                    <button type="submit" className="btn-primary flex items-center justify-center gap-2">
-                        <Plus size={20} /> Add Source
+                    <div style={{ position: 'relative' }}>
+                        <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '1.1rem' }}>₹</div>
+                        <input
+                            type="number"
+                            placeholder="Current Balance"
+                            value={initialBalance}
+                            onChange={(e) => setInitialBalance(e.target.value)}
+                            style={{ paddingLeft: '32px' }}
+                        />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ padding: '14px', borderRadius: '14px', fontWeight: '600' }}>
+                        Add Source
                     </button>
                 </form>
-                {error && <p style={{ color: 'var(--expense)', marginTop: '10px', fontSize: '0.9rem' }}>{error}</p>}
+                {error && <p style={{ color: 'var(--expense)', marginTop: '12px', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
             </div>
 
-            <div className="flex flex-col gap-3">
+            {/* List Section */}
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px', marginLeft: '4px' }}>Established Sources</h3>
+            <div className="flex flex-col gap-4">
                 {sources.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>No sources added yet.</p>
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                        <Wallet size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                        <p>No sources added yet.</p>
+                    </div>
                 ) : (
-                    sources.map(s => (
-                        <div key={s._id} className="glass-card flex justify-between items-center" style={{ padding: '12px 20px' }}>
+                    sources.map((s, index) => (
+                        <div key={s._id} className="glass-card" style={{
+                            padding: '20px',
+                            borderRadius: '20px',
+                            border: '1px solid var(--border)',
+                            background: index % 2 === 0 ? 'var(--bg-card)' : 'rgba(21, 26, 45, 0.6)'
+                        }}>
                             {editingId === s._id ? (
-                                <div className="flex items-center gap-2" style={{ flex: 1 }}>
+                                <div className="flex items-center gap-3">
                                     <input
                                         type="text"
                                         value={editName}
                                         onChange={(e) => setEditName(e.target.value)}
-                                        style={{ padding: '8px', width: '100%' }}
+                                        autoFocus
+                                        style={{ flex: 1 }}
                                     />
-                                    <button onClick={() => handleUpdate(s._id)} style={{ color: 'var(--income)', background: 'transparent' }}>
+                                    <button onClick={() => handleUpdate(s._id)} style={{ color: 'var(--income)', background: 'var(--glass)', padding: '10px', borderRadius: '10px' }}>
                                         <Save size={18} />
                                     </button>
-                                    <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
+                                    <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-secondary)', background: 'var(--glass)', padding: '10px', borderRadius: '10px' }}>
                                         <X size={18} />
                                     </button>
                                 </div>
                             ) : (
-                                <>
-                                    <span style={{ fontWeight: '500' }}>{s.name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => handleEditClick(s)} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '14px',
+                                            background: 'rgba(99, 102, 241, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <CreditCard size={24} color="var(--primary)" />
+                                        </div>
+                                        <div>
+                                            <h4 style={{ fontWeight: '600', fontSize: '1rem' }}>{s.name}</h4>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Registered Account</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => handleEditClick(s)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: '8px' }}>
                                             <Edit2 size={18} />
                                         </button>
-                                        <button onClick={() => handleDelete(s._id)} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
+                                        <button onClick={() => handleDelete(s._id)} style={{ color: 'var(--expense)', opacity: 0.8, background: 'transparent', padding: '8px' }}>
                                             <Trash2 size={18} />
                                         </button>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     ))
                 )}
             </div>
+
+            <div style={{ paddingBottom: '40px' }}></div>
         </div>
     );
 };
