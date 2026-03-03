@@ -22,7 +22,7 @@ export default defineConfig({
         description: 'Premium Expense Tracker Application',
         icons: [
           {
-            src: 'logo.png',
+            src: 'logo-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
