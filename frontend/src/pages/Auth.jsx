@@ -78,7 +78,21 @@ const Auth = () => {
             </div>
             {/* Branding Area */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.75px', marginBottom: '8px', color: 'var(--primary)' }}>
+                <div style={{
+                    width: '72px',
+                    height: '72px',
+                    margin: '0 auto 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, var(--primary), #818cf8)',
+                    borderRadius: '24px',
+                    boxShadow: '0 8px 16px rgba(99, 102, 241, 0.3)',
+                    color: 'white'
+                }}>
+                    <CheckCircle2 size={36} strokeWidth={2.5} />
+                </div>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.75px', marginBottom: '8px' }}>
                     Expense Tracker
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
