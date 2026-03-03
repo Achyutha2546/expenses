@@ -12,9 +12,12 @@ import {
     User as UserIcon,
     ChevronLeft,
     ChevronRight,
-    ArrowRight
+    ArrowRight,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const Account = () => {
     const [filter, setFilter] = useState('monthly'); // 'daily', 'monthly', 'yearly'
@@ -23,6 +26,7 @@ const Account = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -118,6 +122,12 @@ const Account = () => {
                     </button>
                     <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Account Details</h1>
                 </div>
+                <button
+                    onClick={toggleTheme}
+                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
             </header>
 
             {/* User Account Info Section */}

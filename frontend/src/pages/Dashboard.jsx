@@ -13,9 +13,12 @@ import {
     Bell,
     Settings,
     User,
-    History
+    History,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const Dashboard = () => {
     const [transactions, setTransactions] = useState([]);
@@ -24,6 +27,7 @@ const Dashboard = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [showBreakdown, setShowBreakdown] = useState(false);
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     const fetchData = async () => {
@@ -98,6 +102,12 @@ const Dashboard = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={toggleTheme}
+                        style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
                     <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
                         <Bell size={20} />
                     </button>

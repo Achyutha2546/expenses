@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import AddEntry from './pages/Transactions';
@@ -18,73 +19,75 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen">
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                  <Footer />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={<Navigate to="/" />}
-            />
-            <Route
-              path="/add"
-              element={
-                <PrivateRoute>
-                  <AddEntry />
-                  <Footer />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/sources"
-              element={
-                <PrivateRoute>
-                  <Sources />
-                  <Footer />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/account"
-              element={
-                <PrivateRoute>
-                  <Account />
-                  <Footer />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/history"
-              element={
-                <PrivateRoute>
-                  <History />
-                  <Footer />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/onboarding"
-              element={
-                <PrivateRoute>
-                  <Onboarding />
-                </PrivateRoute>
-              }
-            />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen">
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                    <Footer />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={<Navigate to="/" />}
+              />
+              <Route
+                path="/add"
+                element={
+                  <PrivateRoute>
+                    <AddEntry />
+                    <Footer />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/sources"
+                element={
+                  <PrivateRoute>
+                    <Sources />
+                    <Footer />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/account"
+                element={
+                  <PrivateRoute>
+                    <Account />
+                    <Footer />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <PrivateRoute>
+                    <History />
+                    <Footer />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/onboarding"
+                element={
+                  <PrivateRoute>
+                    <Onboarding />
+                  </PrivateRoute>
+                }
+              />
 
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
