@@ -135,10 +135,10 @@ const Account = () => {
                 padding: '24px',
                 borderRadius: '24px',
                 display: 'flex',
-                background: 'linear-gradient(145deg, #1e293b, #0f172a)',
+                background: 'var(--card-gradient)',
                 alignItems: 'center',
                 gap: '20px',
-                border: 'none',
+                border: '1px solid var(--border)',
                 boxShadow: 'var(--shadow-lg)'
             }}>
                 <div style={{

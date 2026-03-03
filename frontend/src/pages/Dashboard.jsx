@@ -119,8 +119,8 @@ const Dashboard = () => {
 
             {/* Premium Wallet Card */}
             <div className="glass-card mb-8" style={{
-                background: 'linear-gradient(145deg, #1e293b, #0f172a)',
-                border: 'none',
+                background: 'var(--card-gradient)',
+                border: '1px solid var(--border)',
                 position: 'relative',
                 overflow: 'hidden',
                 padding: '28px'

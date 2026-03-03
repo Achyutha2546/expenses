@@ -187,13 +187,13 @@ const History = () => {
                         return (
                             <div key={t._id} className="glass-card" style={{
                                 padding: '16px',
-                                border: 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                background: 'rgba(21, 26, 45, 0.4)',
+                                background: 'var(--bg-card)',
                                 marginBottom: '4px',
-                                borderRadius: '16px'
+                                borderRadius: '16px',
+                                border: '1px solid var(--border)'
                             }}>
                                 <div className="flex items-center gap-4">
                                     <div style={{
@@ -245,7 +245,7 @@ const History = () => {
             </div>
 
             <div style={{ paddingBottom: '60px' }}></div>
-        </div>
+        </div >
     );
 };
 

@@ -166,7 +166,7 @@ const Sources = () => {
                             padding: '20px',
                             borderRadius: '20px',
                             border: '1px solid var(--border)',
-                            background: index % 2 === 0 ? 'var(--bg-card)' : 'rgba(21, 26, 45, 0.6)'
+                            background: index % 2 === 0 ? 'var(--bg-card)' : 'var(--glass)'
                         }}>
                             {editingId === s._id ? (
                                 <div className="flex items-center gap-3">
