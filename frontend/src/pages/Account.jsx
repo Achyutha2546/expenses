@@ -204,11 +204,16 @@ const Account = () => {
                             <div className="flex flex-col gap-2 items-end">
                                 <input
                                     type="password"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     maxLength="6"
                                     placeholder={pinStep === 1 ? "Enter current PIN" : "New PIN (4-6 digits)"}
                                     value={tempPin}
+                                    onInput={(e) => {
+                                        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                                    }}
                                     onChange={(e) => {
-                                        setTempPin(e.target.value.replace(/\D/g, ''));
+                                        setTempPin(e.target.value);
                                         setPinError('');
                                     }}
                                     style={{ width: '160px', padding: '8px 12px', fontSize: '0.85rem' }}
