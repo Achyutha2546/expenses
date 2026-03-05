@@ -11,6 +11,8 @@ import History from './pages/History';
 import Account from './pages/Account';
 import Footer from './components/Footer';
 import ReloadPrompt from './components/ReloadPrompt';
+import { SecurityProvider, useSecurity } from './context/SecurityContext';
+import PinLock from './components/PinLock';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -18,78 +20,88 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/auth" />;
 };
 
+const ProtectedApp = ({ children }) => {
+  const { isLocked } = useSecurity();
+  if (isLocked) return <PinLock />;
+  return children;
+};
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <div className="min-h-screen">
-            <ReloadPrompt />
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                    <Footer />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/dashboard"
-                element={<Navigate to="/" />}
-              />
-              <Route
-                path="/add"
-                element={
-                  <PrivateRoute>
-                    <AddEntry />
-                    <Footer />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/sources"
-                element={
-                  <PrivateRoute>
-                    <Sources />
-                    <Footer />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/account"
-                element={
-                  <PrivateRoute>
-                    <Account />
-                    <Footer />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/history"
-                element={
-                  <PrivateRoute>
-                    <History />
-                    <Footer />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/onboarding"
-                element={
-                  <PrivateRoute>
-                    <Onboarding />
-                  </PrivateRoute>
-                }
-              />
+        <SecurityProvider>
+          <Router>
+            <ProtectedApp>
+              <div className="min-h-screen">
+                <ReloadPrompt />
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route
+                    path="/"
+                    element={
+                      <PrivateRoute>
+                        <Dashboard />
+                        <Footer />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={<Navigate to="/" />}
+                  />
+                  <Route
+                    path="/add"
+                    element={
+                      <PrivateRoute>
+                        <AddEntry />
+                        <Footer />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/sources"
+                    element={
+                      <PrivateRoute>
+                        <Sources />
+                        <Footer />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/account"
+                    element={
+                      <PrivateRoute>
+                        <Account />
+                        <Footer />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/history"
+                    element={
+                      <PrivateRoute>
+                        <History />
+                        <Footer />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/onboarding"
+                    element={
+                      <PrivateRoute>
+                        <Onboarding />
+                      </PrivateRoute>
+                    }
+                  />
 
-            </Routes>
-          </div>
-        </Router>
+                </Routes>
+              </div>
+            </ProtectedApp>
+          </Router>
+        </SecurityProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </ThemeProvider >
   );
 }
 

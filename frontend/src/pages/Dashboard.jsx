@@ -16,10 +16,13 @@ import {
     History,
     Sun,
     Moon,
-    Download
+    Download,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useSecurity } from '../context/SecurityContext';
 
 const Dashboard = () => {
     const [transactions, setTransactions] = useState([]);
@@ -29,6 +32,7 @@ const Dashboard = () => {
     const [showBreakdown, setShowBreakdown] = useState(false);
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [peekData, setPeekData] = useState(null);
     const navigate = useNavigate();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showInstallBtn, setShowInstallBtn] = useState(false);
@@ -136,12 +140,9 @@ const Dashboard = () => {
                     >
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-                    <button style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px' }}>
-                        <Bell size={20} />
-                    </button>
-                    <button onClick={logout} style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--expense)', width: '40px', height: '40px', borderRadius: '12px' }}>
-                        <LogOut size={20} />
-                    </button>
+                    <Link to="/account" style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Settings size={20} />
+                    </Link>
                 </div>
             </header>
 
@@ -156,8 +157,10 @@ const Dashboard = () => {
                 <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '150px', height: '150px', background: 'var(--primary)', filter: 'blur(80px)', opacity: '0.15' }}></div>
 
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px', opacity: 0.8 }}>Total Balance</p>
-                <div className="flex items-end gap-2 mb-6">
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>₹{balance.toLocaleString()}</h2>
+                <div className="flex items-end gap-2 mb-6" onClick={() => setPeekData({ title: 'Total Balance', amount: balance, type: 'balance', isIncome: balance >= 0 })} style={{ cursor: 'pointer' }}>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>
+                        ****
+                    </h2>
                 </div>
 
                 <div className="flex gap-4 mt-6">
@@ -168,7 +171,7 @@ const Dashboard = () => {
                             </div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Income</span>
                         </div>
-                        <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--income)' }}>+₹{totals.income.toLocaleString()}</p>
+                        <p onClick={() => setPeekData({ title: 'Income', amount: totals.income, type: 'income', isIncome: true })} style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--income)', cursor: 'pointer' }}>****</p>
                     </div>
                     <div style={{ width: '1px', background: 'var(--border)', height: '40px' }}></div>
                     <div style={{ flex: 1 }}>
@@ -178,7 +181,7 @@ const Dashboard = () => {
                             </div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Expenses</span>
                         </div>
-                        <p style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--expense)' }}>-₹{totals.expense.toLocaleString()}</p>
+                        <p onClick={() => setPeekData({ title: 'Expenses', amount: totals.expense, type: 'expense', isIncome: false })} style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--expense)', cursor: 'pointer' }}>****</p>
                     </div>
                 </div>
             </div>
@@ -222,7 +225,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex flex-col gap-3">
                     {sources.slice(0, 3).map((s) => (
-                        <div key={s._id} className="glass-card" style={{ padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div key={s._id} className="glass-card" onClick={() => setPeekData({ title: s.name, amount: totals.sources[s._id.toString()] || 0, type: 'account', isIncome: true })} style={{ padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                             <div className="flex items-center gap-4">
                                 <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--glass)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <CreditCard size={20} color="var(--primary)" />
@@ -233,7 +236,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontWeight: '700', fontSize: '1rem' }}>₹{(totals.sources[s._id.toString()] || 0).toLocaleString()}</p>
+                                <p style={{ fontWeight: '700', fontSize: '1rem' }}>****</p>
                                 <ChevronRight size={16} color="var(--text-muted)" />
                             </div>
                         </div>
@@ -290,6 +293,55 @@ const Dashboard = () => {
 
             {/* Space for Bottom Nav */}
             <div style={{ height: '20px' }}></div>
+
+            {/* Peek Overlay (Centered) */}
+            {peekData && (
+                <div
+                    onClick={() => setPeekData(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        backdropFilter: 'blur(16px)',
+                        zIndex: 1000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px',
+                        animation: 'slideUp 0.2s ease-out'
+                    }}
+                >
+                    <div className="glass-card" style={{
+                        padding: '40px 24px',
+                        textAlign: 'center',
+                        width: '100%',
+                        maxWidth: '600px',
+                        margin: '0 auto',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                        borderRadius: '24px'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--text-secondary)' }}>{peekData.title}</h3>
+                            <button onClick={() => setPeekData(null)} style={{ background: 'var(--glass)', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div style={{
+                            width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px',
+                            background: peekData.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            {peekData.type === 'expense' ? <TrendingDown size={32} color="var(--expense)" /> : <TrendingUp size={32} color="var(--income)" />}
+                        </div>
+                        <h2 style={{
+                            fontSize: '3rem', fontWeight: '800', letterSpacing: '-1px',
+                            color: peekData.type === 'balance' ? 'var(--text-primary)' : (peekData.isIncome ? 'var(--income)' : 'var(--expense)')
+                        }}>
+                            {peekData.type === 'expense' && '-'}{peekData.type === 'income' && '+'}₹{peekData.amount.toLocaleString()}
+                        </h2>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

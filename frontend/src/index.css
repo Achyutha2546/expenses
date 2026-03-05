@@ -295,3 +295,24 @@ select:focus {
     box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
   }
 }
+
+/* Privacy Mode with Asterisks */
+.privacy-blur {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+body.privacy-mode .privacy-blur {
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
+}
+
+body.privacy-mode .privacy-blur::after {
+  content: '****';
+  color: var(--text-primary);
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+}

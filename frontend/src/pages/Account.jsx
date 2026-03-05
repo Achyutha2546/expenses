@@ -14,10 +14,12 @@ import {
     ChevronRight,
     ArrowRight,
     Sun,
-    Moon
+    Moon,
+    Lock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useSecurity } from '../context/SecurityContext';
 
 const Account = () => {
     const [filter, setFilter] = useState('monthly'); // 'daily', 'monthly', 'yearly'
@@ -27,6 +29,11 @@ const Account = () => {
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { pin, savePin, removePin } = useSecurity();
+    const [pinAction, setPinAction] = useState(null); // 'set', 'change', 'remove'
+    const [pinStep, setPinStep] = useState(1); // 1: verify old, 2: enter new
+    const [tempPin, setTempPin] = useState('');
+    const [pinError, setPinError] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -171,6 +178,101 @@ const Account = () => {
                         fontWeight: '600'
                     }}>
                         Premium Account
+                    </div>
+                </div>
+            </div>
+
+            {/* Security Settings Area */}
+            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '12px',
+                            background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <Lock size={20} color="var(--primary)" />
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>App Lock PIN</h3>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                {pin ? 'PIN is currently set' : 'Lock your app with a 4-digit PIN'}
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        {pinAction ? (
+                            <div className="flex flex-col gap-2 items-end">
+                                <input
+                                    type="password"
+                                    maxLength="6"
+                                    placeholder={pinStep === 1 ? "Enter current PIN" : "New PIN (4-6 digits)"}
+                                    value={tempPin}
+                                    onChange={(e) => {
+                                        setTempPin(e.target.value.replace(/\D/g, ''));
+                                        setPinError('');
+                                    }}
+                                    style={{ width: '160px', padding: '8px 12px', fontSize: '0.85rem' }}
+                                />
+                                {pinError && <p style={{ color: 'var(--expense)', fontSize: '0.75rem', marginTop: '-4px' }}>{pinError}</p>}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            if (pinStep === 1) {
+                                                if (tempPin === pin) {
+                                                    if (pinAction === 'remove') {
+                                                        removePin();
+                                                        setPinAction(null);
+                                                    } else {
+                                                        setPinStep(2);
+                                                        setTempPin('');
+                                                    }
+                                                } else {
+                                                    setPinError('Incorrect PIN');
+                                                }
+                                            } else {
+                                                if (tempPin.length >= 4 && tempPin.length <= 6) {
+                                                    savePin(tempPin);
+                                                    setPinAction(null);
+                                                } else {
+                                                    setPinError('Must be 4 to 6 digits');
+                                                }
+                                            }
+                                        }}
+                                        style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem' }}
+                                    >
+                                        {pinStep === 1 && pinAction === 'remove' ? 'Remove' : (pinStep === 1 ? 'Next' : 'Save')}
+                                    </button>
+                                    <button
+                                        onClick={() => { setPinAction(null); setTempPin(''); setPinError(''); }}
+                                        style={{ background: 'var(--glass)', color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : pin ? (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => { setPinAction('change'); setPinStep(1); setTempPin(''); setPinError(''); }}
+                                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem' }}
+                                >
+                                    Change PIN
+                                </button>
+                                <button
+                                    onClick={() => { setPinAction('remove'); setPinStep(1); setTempPin(''); setPinError(''); }}
+                                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--expense)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem' }}
+                                >
+                                    Remove PIN
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => { setPinAction('set'); setPinStep(2); setTempPin(''); setPinError(''); }}
+                                style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem' }}
+                            >
+                                Set PIN
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
