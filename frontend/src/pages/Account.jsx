@@ -503,6 +503,38 @@ const Account = () => {
                     Version 1.2.0 • Build 2026.03.25
                 </p>
             </div>
+
+            {/* Danger Zone */}
+            <div style={{ marginTop: '24px', padding: '0 4px' }}>
+                <button
+                    onClick={async () => {
+                        if (window.confirm('WARNING: This will permanently delete your account and ALL your financial data. This cannot be undone. Are you sure?')) {
+                            if (window.prompt('To confirm deletion, please type "DELETE" below:') === 'DELETE') {
+                                try {
+                                    await api.delete('/auth/delete');
+                                    alert('Your account and all associated data have been permanently deleted.');
+                                    logout();
+                                    navigate('/');
+                                } catch (err) {
+                                    alert(err.response?.data?.message || 'Failed to delete account');
+                                }
+                            }
+                        }
+                    }}
+                    style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '18px',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        border: '1px solid var(--border)',
+                        fontWeight: '500',
+                        fontSize: '0.85rem'
+                    }}
+                >
+                    Permanently Delete Account
+                </button>
+            </div>
         </div>
     );
 };

@@ -53,4 +53,29 @@ const loginUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+const deleteAccount = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Import other models here to avoid circular dependencies if needed
+        const Transaction = require('../models/transactionModel');
+        const Source = require('../models/sourceModel');
+
+        // Delete all associated data
+        await Transaction.deleteMany({ userId: req.user._id });
+        await Source.deleteMany({ userId: req.user._id });
+
+        // Delete the user
+        await user.deleteOne();
+
+        res.json({ message: 'Account and all data permanently deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, deleteAccount };
