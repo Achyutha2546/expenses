@@ -67,7 +67,7 @@ const History = () => {
     const displayTransactions = transactions
         .filter(t => t.purpose !== 'Initial Balance Setup')
         .filter(t => {
-            const matchesSearch = (t.purpose || t.source || '').toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = (t.purpose || t.source || (t.type === 'transfer' ? 'Transfer' : '')).toLowerCase().includes(searchQuery.toLowerCase());
             const matchesType = filterType === 'all' || t.type === filterType;
             return matchesSearch && matchesType;
         });
@@ -139,7 +139,7 @@ const History = () => {
 
             {/* Filter Tabs */}
             <div className="flex gap-2 mb-6" style={{ overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-                {['all', 'income', 'expense'].map((type) => (
+                {['all', 'income', 'expense', 'transfer'].map((type) => (
                     <button
                         key={type}
                         onClick={() => setFilterType(type)}
@@ -184,6 +184,8 @@ const History = () => {
                 ) : (
                     displayTransactions.map((t, index) => {
                         const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown';
+                        const toSourceName = t.type === 'transfer' ? (sources.find(s => s._id.toString() === t.toSourceId?.toString())?.name || 'Unknown') : '';
+
                         return (
                             <div key={t._id} className="glass-card" style={{
                                 padding: '16px',
@@ -200,20 +202,20 @@ const History = () => {
                                         width: '44px',
                                         height: '44px',
                                         borderRadius: '14px',
-                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : <TrendingDown size={20} color="var(--expense)" />}
+                                        {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
                                     </div>
                                     <div>
                                         <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '2px' }}>
-                                            {t.type === 'income' ? (t.source || 'Income') : (t.purpose || 'Expense')}
+                                            {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `Transfer to ${toSourceName}`}
                                         </h4>
                                         <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                             <Wallet size={12} />
-                                            <span>{sourceName}</span>
+                                            <span>{t.type === 'transfer' ? `From ${sourceName}` : sourceName}</span>
                                             <span>•</span>
                                             <span>{new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                                         </div>
@@ -224,9 +226,9 @@ const History = () => {
                                         <p style={{
                                             fontWeight: '700',
                                             fontSize: '1rem',
-                                            color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
+                                            color: t.type === 'income' ? 'var(--income)' : t.type === 'expense' ? 'var(--text-primary)' : 'var(--primary)'
                                         }}>
-                                            {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                                            {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
                                         </p>
                                         <div className="flex gap-3 justify-end mt-1">
                                             <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>

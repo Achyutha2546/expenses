@@ -8,7 +8,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['income', 'expense'],
+        enum: ['income', 'expense', 'transfer'],
         required: [true, 'Transaction type is required']
     },
     amount: {
@@ -20,6 +20,11 @@ const transactionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Source',
         required: [true, 'Source (Account) is required']
+    },
+    toSourceId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Source',
+        required: function () { return this.type === 'transfer'; }
     },
     purpose: {
         type: String,

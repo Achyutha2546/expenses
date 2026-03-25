@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import Landing from './pages/Landing';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import AddEntry from './pages/Transactions';
@@ -36,19 +37,21 @@ function App() {
               <div className="min-h-screen">
                 <ReloadPrompt />
                 <Routes>
+                  {/* Landing Page at Root */}
+                  <Route path="/" element={<Landing />} />
+                  
+                  {/* Auth Route */}
                   <Route path="/auth" element={<Auth />} />
+                  
+                  {/* Protected Routes */}
                   <Route
-                    path="/"
+                    path="/dashboard"
                     element={
                       <PrivateRoute>
                         <Dashboard />
                         <Footer />
                       </PrivateRoute>
                     }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={<Navigate to="/" />}
                   />
                   <Route
                     path="/add"
@@ -95,6 +98,8 @@ function App() {
                     }
                   />
 
+                  {/* Fallback redirect */}
+                  <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </div>
             </ProtectedApp>

@@ -12,6 +12,7 @@ const AddEntry = () => {
         type: 'expense',
         amount: '',
         sourceId: '',
+        toSourceId: '',
         date: new Date().toISOString().split('T')[0],
         purpose: '',
         source: '',
@@ -32,13 +33,14 @@ const AddEntry = () => {
                         type: editingTransaction.type,
                         amount: editingTransaction.amount,
                         sourceId: editingTransaction.sourceId,
+                        toSourceId: editingTransaction.toSourceId || '',
                         date: new Date(editingTransaction.date).toISOString().split('T')[0],
                         purpose: editingTransaction.purpose || '',
                         source: editingTransaction.source || '',
                         category: editingTransaction.category || ''
                     });
                 } else if (data.length > 0) {
-                    setFormData(prev => ({ ...prev, sourceId: data[0]._id }));
+                    setFormData(prev => ({ ...prev, sourceId: data[0]._id, toSourceId: data.length > 1 ? data[1]._id : '' }));
                 }
             } catch (err) {
                 console.error('Error fetching sources', err);
@@ -124,9 +126,23 @@ const AddEntry = () => {
                             fontWeight: '600',
                             borderRadius: '12px',
                         }}
-                        onClick={() => setFormData({ ...formData, type: 'income', purpose: '' })}
+                        onClick={() => setFormData({ ...formData, type: 'income', purpose: '', toSourceId: '' })}
                     >
                         Income
+                    </button>
+                    <button
+                        type="button"
+                        className="flex-1"
+                        style={{
+                            background: formData.type === 'transfer' ? 'var(--primary)' : 'transparent',
+                            color: formData.type === 'transfer' ? 'white' : 'var(--text-secondary)',
+                            padding: '12px',
+                            fontWeight: '600',
+                            borderRadius: '12px',
+                        }}
+                        onClick={() => setFormData({ ...formData, type: 'transfer', purpose: '', source: '' })}
+                    >
+                        Transfer
                     </button>
                     <button
                         type="button"
@@ -138,7 +154,7 @@ const AddEntry = () => {
                             fontWeight: '600',
                             borderRadius: '12px',
                         }}
-                        onClick={() => setFormData({ ...formData, type: 'expense', source: '' })}
+                        onClick={() => setFormData({ ...formData, type: 'expense', source: '', toSourceId: '' })}
                     >
                         Expense
                     </button>
@@ -177,7 +193,9 @@ const AddEntry = () => {
                 <div className="flex flex-col gap-4">
                     {/* Account Source */}
                     <div style={{ position: 'relative' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Account</label>
+                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
+                            {formData.type === 'transfer' ? 'From Account' : 'Account'}
+                        </label>
                         <div style={{ position: 'relative' }}>
                             <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
                                 <Landmark size={20} />
@@ -198,26 +216,55 @@ const AddEntry = () => {
                         </div>
                     </div>
 
-                    {/* Purpose / Source Text */}
-                    <div>
-                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
-                            {formData.type === 'income' ? 'From' : 'What for?'}
-                        </label>
+                    {/* Destination Account (Only for Transfer) */}
+                    {formData.type === 'transfer' && (
                         <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
-                                <FileText size={20} />
+                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>To Account</label>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                    <Landmark size={20} />
+                                </div>
+                                <select
+                                    name="toSourceId"
+                                    value={formData.toSourceId}
+                                    onChange={handleChange}
+                                    required
+                                    style={{ paddingLeft: '48px' }}
+                                >
+                                    {sources.length === 0 ? (
+                                        <option value="">No sources found.</option>
+                                    ) : (
+                                        sources
+                                            .filter(s => s._id !== formData.sourceId)
+                                            .map(s => <option key={s._id} value={s._id}>{s.name}</option>)
+                                    )}
+                                </select>
                             </div>
-                            <input
-                                name={formData.type === 'income' ? 'source' : 'purpose'}
-                                type="text"
-                                value={formData.type === 'income' ? formData.source : formData.purpose}
-                                onChange={handleChange}
-                                required
-                                placeholder={formData.type === 'income' ? "Employer, Gift, etc." : "Rent, Coffee, Food..."}
-                                style={{ paddingLeft: '48px' }}
-                            />
                         </div>
-                    </div>
+                    )}
+
+                    {/* Purpose / Source Text */}
+                    {formData.type !== 'transfer' && (
+                        <div>
+                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
+                                {formData.type === 'income' ? 'From' : 'What for?'}
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                    <FileText size={20} />
+                                </div>
+                                <input
+                                    name={formData.type === 'income' ? 'source' : 'purpose'}
+                                    type="text"
+                                    value={formData.type === 'income' ? formData.source : formData.purpose}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder={formData.type === 'income' ? "Employer, Gift, etc." : "Rent, Coffee, Food..."}
+                                    style={{ paddingLeft: '48px' }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Date Selector */}
                     <div>

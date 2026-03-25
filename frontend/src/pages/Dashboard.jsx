@@ -85,12 +85,31 @@ const Dashboard = () => {
     };
 
     const totals = transactions.reduce((acc, curr) => {
-        if (curr.type === 'income') acc.income += curr.amount;
-        else acc.expense += curr.amount;
-        const sourceKey = curr.sourceId?.toString();
-        if (sourceKey) {
-            if (!acc.sources[sourceKey]) acc.sources[sourceKey] = 0;
-            acc.sources[sourceKey] += (curr.type === 'income' ? curr.amount : -curr.amount);
+        if (curr.type === 'income') {
+            acc.income += curr.amount;
+            const sourceKey = curr.sourceId?.toString();
+            if (sourceKey) {
+                if (!acc.sources[sourceKey]) acc.sources[sourceKey] = 0;
+                acc.sources[sourceKey] += curr.amount;
+            }
+        } else if (curr.type === 'expense') {
+            acc.expense += curr.amount;
+            const sourceKey = curr.sourceId?.toString();
+            if (sourceKey) {
+                if (!acc.sources[sourceKey]) acc.sources[sourceKey] = 0;
+                acc.sources[sourceKey] -= curr.amount;
+            }
+        } else if (curr.type === 'transfer') {
+            const fromSourceKey = curr.sourceId?.toString();
+            const toSourceKey = curr.toSourceId?.toString();
+            if (fromSourceKey) {
+                if (!acc.sources[fromSourceKey]) acc.sources[fromSourceKey] = 0;
+                acc.sources[fromSourceKey] -= curr.amount;
+            }
+            if (toSourceKey) {
+                if (!acc.sources[toSourceKey]) acc.sources[toSourceKey] = 0;
+                acc.sources[toSourceKey] += curr.amount;
+            }
         }
         return acc;
     }, { income: 0, expense: 0, sources: {} });
@@ -138,7 +157,18 @@ const Dashboard = () => {
                         onClick={toggleTheme}
                         style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (window.confirm('Sign out of your account?')) {
+                                logout();
+                                navigate('/');
+                            }
+                        }}
+                        style={{ background: 'rgba(244, 63, 94, 0.12)', color: 'var(--expense)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <LogOut size={20} />
                     </button>
                     <Link to="/account" style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Settings size={20} />

@@ -15,7 +15,8 @@ import {
     ArrowRight,
     Sun,
     Moon,
-    Lock
+    Lock,
+    LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -27,7 +28,7 @@ const Account = () => {
     const [displayType, setDisplayType] = useState('all'); // 'all', 'income', 'expense'
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const { pin, savePin, removePin } = useSecurity();
     const [pinAction, setPinAction] = useState(null); // 'set', 'change', 'remove'
@@ -406,7 +407,7 @@ const Account = () => {
             </div>
 
             {/* Transactions Section */}
-            <div>
+            <div className="mb-10">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px', textTransform: 'capitalize' }}>
                     {displayType === 'all' ? 'Transactions' : displayType} Breakdown
                 </h3>
@@ -431,19 +432,20 @@ const Account = () => {
                                         width: '44px',
                                         height: '44px',
                                         borderRadius: '12px',
-                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(244, 63, 94, 0.12)',
+                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.12)' : t.type === 'expense' ? 'rgba(244, 63, 94, 0.12)' : 'rgba(139, 92, 246, 0.12)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
                                         {t.type === 'income' ?
                                             <TrendingUp size={20} color="var(--income)" /> :
-                                            <TrendingDown size={20} color="var(--expense)" />
+                                            t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> :
+                                            <ArrowRight size={20} color="var(--primary)" />
                                         }
                                     </div>
                                     <div>
                                         <h4 style={{ fontSize: '0.95rem', fontWeight: '600' }}>
-                                            {t.type === 'income' ? (t.source || 'Income') : (t.purpose || 'Expense')}
+                                            {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : 'Transfer'}
                                         </h4>
                                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                             {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -454,9 +456,9 @@ const Account = () => {
                                     <p style={{
                                         fontWeight: '700',
                                         fontSize: '1rem',
-                                        color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
+                                        color: t.type === 'income' ? 'var(--income)' : t.type === 'expense' ? 'var(--text-primary)' : 'var(--primary)'
                                     }}>
-                                        {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                                        {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
                                     </p>
                                     <ArrowUpRight size={14} color="var(--text-muted)" />
                                 </div>
@@ -464,6 +466,38 @@ const Account = () => {
                         ))
                     )}
                 </div>
+            </div>
+
+            {/* Sign Out Button */}
+            <div style={{ marginTop: '40px', padding: '0 4px' }}>
+                <button
+                    onClick={() => {
+                        if (window.confirm('Are you sure you want to sign out?')) {
+                            logout();
+                            navigate('/');
+                        }
+                    }}
+                    style={{
+                        width: '100%',
+                        padding: '16px',
+                        borderRadius: '18px',
+                        background: 'rgba(244, 63, 94, 0.1)',
+                        color: 'var(--expense)',
+                        border: '1px solid rgba(244, 63, 94, 0.2)',
+                        fontWeight: '700',
+                        fontSize: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px'
+                    }}
+                >
+                    <LogOut size={20} />
+                    Sign Out from Device
+                </button>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '12px' }}>
+                    Version 1.2.0 • Build 2026.03.25
+                </p>
             </div>
         </div>
     );
