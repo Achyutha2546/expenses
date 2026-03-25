@@ -99,7 +99,7 @@ const Sources = () => {
             {/* Header Area */}
             <header className="flex items-center gap-4 mb-8">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/dashboard')}
                     style={{
                         background: 'var(--glass)',
                         color: 'var(--text-primary)',

@@ -81,7 +81,7 @@ const History = () => {
             <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/dashboard')}
                         style={{
                             background: 'var(--glass)',
                             color: 'var(--text-primary)',

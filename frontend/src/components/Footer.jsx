@@ -6,12 +6,11 @@ const Footer = () => {
     const location = useLocation();
 
     const isActive = (path) => {
-        if (path === '/' && location.pathname === '/dashboard') return true;
         return location.pathname === path;
     };
 
     const navItems = [
-        { path: '/', icon: LayoutDashboard, label: 'Home' },
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
         { path: '/account', icon: UserIcon, label: 'Account' },
         { path: '/add', icon: Plus, label: 'Add', isFab: true },
         { path: '/sources', icon: Wallet, label: 'Sources' },
