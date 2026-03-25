@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: 'Expenses',
         id: '/',
         scope: '/',
-        start_url: '/',
+        start_url: '/?mode=standalone',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#070911',
