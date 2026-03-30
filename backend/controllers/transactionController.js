@@ -1,4 +1,5 @@
 const Transaction = require('../models/transactionModel');
+const mongoose = require('mongoose');
 
 const getTransactions = async (req, res) => {
     try {
@@ -13,6 +14,39 @@ const addTransaction = async (req, res) => {
     const { type, amount, category, date, purpose, source, sourceId, toSourceId } = req.body;
 
     try {
+        // For transfers, create TWO transactions so both source balances update correctly:
+        // 1. An expense from the source (debit)
+        // 2. An income to the destination (credit)
+        if (type === 'transfer') {
+            const transferId = new mongoose.Types.ObjectId();
+
+            const [debit, credit] = await Promise.all([
+                Transaction.create({
+                    userId: req.user._id,
+                    type: 'transfer',
+                    amount,
+                    date,
+                    sourceId,
+                    toSourceId,
+                    transferId,
+                    purpose: 'Transfer Out',
+                }),
+                Transaction.create({
+                    userId: req.user._id,
+                    type: 'transfer',
+                    amount,
+                    date,
+                    sourceId: toSourceId,
+                    toSourceId: sourceId,
+                    transferId,
+                    purpose: 'Transfer In',
+                }),
+            ]);
+
+            return res.status(201).json({ debit, credit });
+        }
+
+        // Normal income/expense
         const transaction = await Transaction.create({
             userId: req.user._id,
             type,
@@ -22,7 +56,6 @@ const addTransaction = async (req, res) => {
             purpose,
             source,
             sourceId,
-            toSourceId
         });
 
         res.status(201).json(transaction);
@@ -67,7 +100,13 @@ const deleteTransaction = async (req, res) => {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
-        await transaction.deleteOne();
+        // If this is part of a transfer, delete both legs
+        if (transaction.transferId) {
+            await Transaction.deleteMany({ transferId: transaction.transferId });
+        } else {
+            await transaction.deleteOne();
+        }
+
         res.json({ message: 'Transaction removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -23,8 +23,10 @@ const transactionSchema = new mongoose.Schema({
     },
     toSourceId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Source',
-        required: function () { return this.type === 'transfer'; }
+        ref: 'Source'
+    },
+    transferId: {
+        type: mongoose.Schema.Types.ObjectId
     },
     purpose: {
         type: String,

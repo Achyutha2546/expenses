@@ -104,15 +104,17 @@ const Dashboard = () => {
                 acc.sources[sourceKey] -= curr.amount;
             }
         } else if (curr.type === 'transfer') {
-            const fromSourceKey = curr.sourceId?.toString();
-            const toSourceKey = curr.toSourceId?.toString();
-            if (fromSourceKey) {
-                if (!acc.sources[fromSourceKey]) acc.sources[fromSourceKey] = 0;
-                acc.sources[fromSourceKey] -= curr.amount;
-            }
-            if (toSourceKey) {
-                if (!acc.sources[toSourceKey]) acc.sources[toSourceKey] = 0;
-                acc.sources[toSourceKey] += curr.amount;
+            // Each transfer creates two records (Transfer Out & Transfer In).
+            // Each record's sourceId is the account it affects.
+            // Transfer Out: debit sourceId. Transfer In: credit sourceId.
+            const sourceKey = curr.sourceId?.toString();
+            if (sourceKey) {
+                if (!acc.sources[sourceKey]) acc.sources[sourceKey] = 0;
+                if (curr.purpose === 'Transfer In') {
+                    acc.sources[sourceKey] += curr.amount;
+                } else {
+                    acc.sources[sourceKey] -= curr.amount;
+                }
             }
         }
         return acc;
