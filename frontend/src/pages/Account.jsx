@@ -16,7 +16,9 @@ import {
     Sun,
     Moon,
     Lock,
-    LogOut
+    LogOut,
+    Share2,
+    Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -105,6 +107,41 @@ const Account = () => {
     const totalIncome = currentTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
+
+    const exportData = () => {
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('offline_cache_') || key === 'pending_sync_operations') {
+                data[key] = localStorage.getItem(key);
+            }
+        }
+        if (Object.keys(data).length === 0) {
+            alert('No offline data found to export.');
+            return;
+        }
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        navigator.clipboard.writeText(encoded).then(() => {
+            alert('Your offline data has been copied to the clipboard! Open the Render link and use the "Import" button there.');
+        }).catch(err => {
+            alert('Failed to copy: ' + encoded);
+        });
+    };
+
+    const importData = () => {
+        const code = window.prompt('Paste the export code you copied from your other link:');
+        if (!code) return;
+        try {
+            const data = JSON.parse(decodeURIComponent(escape(atob(code))));
+            Object.keys(data).forEach(key => {
+                localStorage.setItem(key, data[key]);
+            });
+            alert('Data imported successfully! The app will now reload to sync your transactions.');
+            window.location.reload();
+        } catch (err) {
+            alert('Invalid migration code. Please make sure you copied the entire code.');
+        }
+    };
 
     if (loading) return (
         <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
@@ -333,6 +370,60 @@ const Account = () => {
                     </div>
                     <ArrowRight size={18} />
                 </button>
+            </div>
+
+            {/* Data Migration Section */}
+            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
+                <div className="flex items-center gap-3 mb-4">
+                    <div style={{
+                        width: '40px', height: '40px', borderRadius: '12px',
+                        background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <Share2 size={20} color="#3b82f6" />
+                    </div>
+                    <div>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>Data Migration</h3>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Transfer offline data between links</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={exportData}
+                        style={{
+                            padding: '12px',
+                            borderRadius: '12px',
+                            background: 'var(--glass)',
+                            color: 'var(--text-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            border: '1px solid var(--border)'
+                        }}
+                    >
+                        <Share2 size={16} /> Export Code
+                    </button>
+                    <button
+                        onClick={importData}
+                        style={{
+                            padding: '12px',
+                            borderRadius: '12px',
+                            background: 'var(--glass)',
+                            color: 'var(--text-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            border: '1px solid var(--border)'
+                        }}
+                    >
+                        <Download size={16} /> Import Code
+                    </button>
+                </div>
             </div>
 
             {/* Sign Out Button */}
