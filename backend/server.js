@@ -24,8 +24,11 @@ const frontendDist = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendDist));
 
 // SPA fallback: any non-API route serves index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
+app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+        return res.sendFile(path.join(frontendDist, 'index.html'));
+    }
+    next();
 });
 
 // Database Connection
