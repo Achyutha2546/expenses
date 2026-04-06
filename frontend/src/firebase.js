@@ -2,12 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    apiKey: "AIzaSyAxglINJgS2Lw9G7Z5BOVBwS3NTwUH2RDw",
+    authDomain: "expense-tracker-aa175.firebaseapp.com",
+    projectId: "expense-tracker-aa175",
+    storageBucket: "expense-tracker-aa175.firebasestorage.app",
+    messagingSenderId: "930837422199",
+    appId: "1:930837422199:web:dc88f96f270e391225a672",
 };
 
 const app = initializeApp(firebaseConfig);
