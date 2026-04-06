@@ -25,13 +25,7 @@ try {
             } catch (e) { /* Not base64, continue */ }
         }
 
-        // 3. Replace escaped newlines (\\n) with actual newlines (\n)
-        // This is common when pasting from a JSON file into a UI.
-        if (saValue.includes('\\n')) {
-            saValue = saValue.replace(/\\n/g, '\n');
-        }
-
-        // 4. Parse the JSON
+        // 3. Parse the JSON
         try {
             serviceAccount = JSON.parse(saValue);
         } catch (parseError) {
