@@ -69,6 +69,14 @@ const deleteSource = async (req, res) => {
 const completeOnboarding = async (req, res) => {
     const { sources } = req.body; // Expecting [{ name: string, balance: number }]
 
+    console.log('[Onboarding] req.user:', JSON.stringify(req.user));
+    console.log('[Onboarding] req.user.uid:', req.user?.uid);
+    console.log('[Onboarding] sources:', JSON.stringify(sources));
+
+    if (!req.user?.uid) {
+        return res.status(401).json({ message: 'User authentication failed - no uid found' });
+    }
+
     try {
         const createdSources = [];
         for (const s of sources) {
