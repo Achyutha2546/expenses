@@ -12,8 +12,8 @@ const protect = async (req, res, next) => {
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_super_secret_key_here');
 
-            // Get user from the token
-            req.user = await User.findById(decoded.id).select('-password');
+            // Get user from the token using Firebase uid
+            req.user = await User.findOne({ uid: decoded.uid });
 
             if (!req.user) {
                 return res.status(401).json({ message: 'Not authorized, user not found' });

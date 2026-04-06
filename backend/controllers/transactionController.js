@@ -1,9 +1,38 @@
 const Transaction = require('../models/transactionModel');
 const mongoose = require('mongoose');
+const { Parser } = require('json2csv');
 
 const getTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find({ userId: req.user._id }).sort({ date: -1, createdAt: -1 });
+        const { startDate, endDate, category, type, search } = req.query;
+        let query = { userId: req.user.uid };
+
+        // Date Range Filter
+        if (startDate || endDate) {
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
+        }
+
+        // Category Filter
+        if (category && category !== 'all') {
+            query.category = { $regex: new RegExp(category, 'i') };
+        }
+
+        // Type Filter
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+
+        // Search Query (matches purpose or source)
+        if (search) {
+            query.$or = [
+                { purpose: { $regex: new RegExp(search, 'i') } },
+                { source: { $regex: new RegExp(search, 'i') } }
+            ];
+        }
+
+        const transactions = await Transaction.find(query).sort({ date: -1, createdAt: -1 });
         res.json(transactions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -22,7 +51,7 @@ const addTransaction = async (req, res) => {
 
             const [debit, credit] = await Promise.all([
                 Transaction.create({
-                    userId: req.user._id,
+                    userId: req.user.uid,
                     type: 'transfer',
                     amount,
                     date,
@@ -32,7 +61,7 @@ const addTransaction = async (req, res) => {
                     purpose: 'Transfer Out',
                 }),
                 Transaction.create({
-                    userId: req.user._id,
+                    userId: req.user.uid,
                     type: 'transfer',
                     amount,
                     date,
@@ -48,7 +77,7 @@ const addTransaction = async (req, res) => {
 
         // Normal income/expense
         const transaction = await Transaction.create({
-            userId: req.user._id,
+            userId: req.user.uid,
             type,
             amount,
             category,
@@ -74,7 +103,7 @@ const updateTransaction = async (req, res) => {
             return res.status(404).json({ message: 'Transaction not found' });
         }
 
-        if (transaction.userId.toString() !== req.user._id.toString()) {
+        if (transaction.userId !== req.user.uid) {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
@@ -131,7 +160,7 @@ const updateTransaction = async (req, res) => {
 
             // Create the "Transfer In" leg
             await Transaction.create({
-                userId: req.user._id,
+                userId: req.user.uid,
                 type: 'transfer',
                 amount,
                 date,
@@ -165,7 +194,7 @@ const deleteTransaction = async (req, res) => {
             return res.status(404).json({ message: 'Transaction not found' });
         }
 
-        if (transaction.userId.toString() !== req.user._id.toString()) {
+        if (transaction.userId !== req.user.uid) {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
@@ -182,9 +211,45 @@ const deleteTransaction = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Export transactions to CSV
+ * @route   GET /api/transactions/export
+ * @access  Private
+ */
+const exportTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ userId: req.user.uid })
+            .sort({ date: -1 })
+            .populate('sourceId', 'name');
+
+        if (!transactions || transactions.length === 0) {
+            return res.status(404).json({ message: 'No transactions found for export' });
+        }
+
+        const fields = [
+            { label: 'Date', value: (row) => new Date(row.date).toLocaleDateString() },
+            { label: 'Type', value: 'type' },
+            { label: 'Amount (₹)', value: 'amount' },
+            { label: 'Category', value: 'category' },
+            { label: 'Source/Account', value: (row) => row.sourceId?.name || (row.type === 'income' ? (row.source || '') : 'N/A') },
+            { label: 'Purpose/From', value: (row) => row.purpose || (row.type === 'income' ? (row.source || '') : '') }
+        ];
+
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(transactions);
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`expenses_${new Date().toISOString().split('T')[0]}.csv`);
+        res.send(csv);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getTransactions,
     addTransaction,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    exportTransactions
 };

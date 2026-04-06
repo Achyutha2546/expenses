@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
-import { LogIn, UserPlus, Mail, Lock, CheckCircle2, Sun, Moon, Download } from 'lucide-react';
+import { CheckCircle2, Sun, Moon, Download, LogIn, UserPlus, Mail, Lock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useEffect } from 'react';
 
@@ -11,7 +10,8 @@ const Auth = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const [signingIn, setSigningIn] = useState(false);
+    const { signInWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -37,16 +37,32 @@ const Auth = () => {
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleGoogleSignIn = async () => {
+        setError('');
+        setSigningIn(true);
+        try {
+            const userData = await signInWithGoogle();
+            navigate(userData.isNewUser ? '/onboarding' : '/dashboard');
+        } catch (err) {
+            setError(err.message || 'Something went wrong');
+        } finally {
+            setSigningIn(false);
+        }
+    };
+
+    const handleEmailSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSigningIn(true);
         try {
-            const endpoint = isLogin ? '/auth/login' : '/auth/signup';
-            const { data } = await api.post(endpoint, { email, password });
-            login(data);
-            navigate(isLogin ? '/dashboard' : '/onboarding');
+            const userData = isLogin
+                ? await signInWithEmail(email, password)
+                : await signUpWithEmail(email, password);
+            navigate(userData.isNewUser ? '/onboarding' : '/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Something went wrong');
+            setError(err.message || 'Something went wrong');
+        } finally {
+            setSigningIn(false);
         }
     };
 
@@ -76,6 +92,7 @@ const Auth = () => {
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
             </div>
+
             {/* Branding Area */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{
@@ -96,7 +113,7 @@ const Auth = () => {
                     Expense Tracker
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                    {isLogin ? "Welcome back! Login to your account." : "Start tracking your expenses today."}
+                    {isLogin ? "Welcome back! Sign in to continue." : "Create an account to get started."}
                 </p>
             </div>
 
@@ -114,7 +131,7 @@ const Auth = () => {
                 <div className="flex items-center gap-3 mb-8" style={{ justifyContent: 'center' }}>
                     {isLogin ? <LogIn size={22} color="var(--primary)" /> : <UserPlus size={22} color="var(--primary)" />}
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
-                        {isLogin ? 'Login' : 'Create Account'}
+                        {isLogin ? 'Sign In' : 'Create Account'}
                     </h2>
                 </div>
 
@@ -134,7 +151,53 @@ const Auth = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                {/* Google Sign-In Button */}
+                <button
+                    id="google-sign-in-btn"
+                    onClick={handleGoogleSignIn}
+                    disabled={signingIn}
+                    style={{
+                        width: '100%',
+                        padding: '14px 24px',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        cursor: signingIn ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        opacity: signingIn ? 0.7 : 1,
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                    }}
+                >
+                    <svg width="20" height="20" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                {/* Divider */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    margin: '24px 0'
+                }}>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: '500' }}>or</span>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                </div>
+
+                {/* Email/Password Form */}
+                <form onSubmit={handleEmailSubmit} className="flex flex-col gap-5">
                     <div>
                         <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginLeft: '4px' }}>Email Address</label>
                         <div style={{ position: 'relative' }}>
@@ -164,19 +227,22 @@ const Auth = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                minLength={6}
                                 style={{ paddingLeft: '48px' }}
                             />
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary" style={{
-                        marginTop: '12px',
+                    <button type="submit" className="btn-primary" disabled={signingIn} style={{
+                        marginTop: '4px',
                         padding: '16px',
                         fontSize: '1rem',
                         fontWeight: '700',
-                        borderRadius: '16px'
+                        borderRadius: '16px',
+                        opacity: signingIn ? 0.7 : 1,
+                        cursor: signingIn ? 'not-allowed' : 'pointer'
                     }}>
-                        {isLogin ? 'Login Now' : 'Join Now'}
+                        {signingIn ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
                     </button>
                 </form>
 
@@ -184,7 +250,7 @@ const Auth = () => {
                     {isLogin ? "Don't have an account? " : "Already have an account? "}
                     <button
                         type="button"
-                        onClick={() => setIsLogin(!isLogin)}
+                        onClick={() => { setIsLogin(!isLogin); setError(''); }}
                         style={{
                             background: 'transparent',
                             color: 'var(--primary)',
@@ -197,7 +263,6 @@ const Auth = () => {
                         {isLogin ? 'Register' : 'Sign In'}
                     </button>
                 </div>
-
             </div>
 
             {/* Footer Tagline */}

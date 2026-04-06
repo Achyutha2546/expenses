@@ -26,28 +26,73 @@ const History = () => {
     const [loading, setLoading] = useState(true);
     const [sources, setSources] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense'
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [category, setCategory] = useState('all');
     const [showSearch, setShowSearch] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
     const { user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [transRes, sourcesRes] = await Promise.all([
-                    api.get('/transactions'),
-                    api.get('/sources')
-                ]);
-                setTransactions(transRes.data);
-                setSources(sourcesRes.data);
-            } catch (err) {
-                console.error('Error fetching history data', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchData = async (quiet = false) => {
+        try {
+            if (!quiet) setLoading(true);
+            else setIsRefreshing(true);
+
+            const params = new URLSearchParams();
+            if (debouncedSearch) params.append('search', debouncedSearch);
+            if (filterType !== 'all') params.append('type', filterType);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            if (category !== 'all') params.append('category', category);
+
+            const [transRes, sourcesRes] = await Promise.all([
+                api.get(`/transactions?${params.toString()}`),
+                api.get('/sources')
+            ]);
+            setTransactions(transRes.data);
+            setSources(sourcesRes.data);
+        } catch (err) {
+            console.error('Error fetching history data', err);
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData(transactions.length > 0);
+    }, [debouncedSearch, filterType, startDate, endDate, category]);
+
+    const handleExport = async () => {
+        try {
+            setExportLoading(true);
+            const response = await api.get('/transactions/export', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `History_Export_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error('Export failed', err);
+            alert('Failed to export history. Please try again.');
+        } finally {
+            setExportLoading(false);
+        }
+    };
 
     const handleDelete = async (id) => {
         if (window.confirm('Delete this transaction?')) {
@@ -71,18 +116,30 @@ const History = () => {
     );
 
     const displayTransactions = transactions
-        .filter(t => t.purpose !== 'Initial Balance Setup' && t.purpose !== 'Transfer In')
-        .filter(t => {
-            const matchesSearch = (t.purpose || t.source || (t.type === 'transfer' ? 'Transfer' : '') || '').toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesType = filterType === 'all' || t.type === filterType;
-            return matchesSearch && matchesType;
-        });
+        .filter(t => t.purpose !== 'Initial Balance Setup' && t.purpose !== 'Transfer In');
 
     const incomeCategories = ['Job', 'Freelance', 'Investment', 'Other'];
     const expenseCategories = ['Food', 'Rent', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Other'];
 
     return (
         <div className="container animate-in">
+            {/* Offline Banner */}
+            {!window.navigator.onLine && (
+                <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid var(--expense)',
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }} className="pulse-animation">
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--expense)' }}></div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--expense)' }}>Offline Mode: View only.</span>
+                </div>
+            )}
+
             {/* Header Area */}
             <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
@@ -119,28 +176,46 @@ const History = () => {
                     >
                         <Search size={18} />
                     </button>
-                    <Link to="/account" style={{
-                        background: 'var(--glass)',
-                        color: 'var(--text-primary)',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <Settings size={20} />
-                    </Link>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        style={{
+                            background: showFilters ? 'var(--primary)' : 'var(--glass)',
+                            color: showFilters ? 'white' : 'var(--text-primary)',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <Filter size={18} />
+                    </button>
+                    <button 
+                        onClick={() => fetchData(true)} 
+                        disabled={isRefreshing}
+                        style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <Settings size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                    </button>
+                    <button 
+                        onClick={handleExport} 
+                        disabled={exportLoading}
+                        style={{ background: 'var(--primary-gradient)', color: 'white', padding: '0 12px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: '700', border: 'none', boxShadow: '0 4px 12px -2px rgba(139, 92, 246, 0.3)' }}
+                    >
+                        {exportLoading ? <div className="loader" style={{ width: '14px', height: '14px', borderWidth: '2px' }}></div> : <Download size={16} />}
+                        CSV
+                    </button>
                 </div>
             </header>
 
-            {/* Search Bar - Animated */}
+            {/* Search Bar */}
             {showSearch && (
                 <div className="animate-in mb-6">
                     <div style={{ position: 'relative' }}>
                         <input
                             type="text"
-                            placeholder="Search transactions..."
+                            placeholder="Find transactions..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             style={{
@@ -152,6 +227,65 @@ const History = () => {
                         />
                         <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                     </div>
+                </div>
+            )}
+
+            {/* Advanced Filters */}
+            {showFilters && (
+                <div className="glass-card animate-in mb-6" style={{ padding: '24px', borderRadius: '28px', border: '1px solid var(--border)', position: 'relative' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+                        <div style={{ flex: '1 1 140px' }}>
+                            <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>START DATE</label>
+                            <input 
+                                type="date" 
+                                value={startDate} 
+                                onChange={(e) => setStartDate(e.target.value)} 
+                                style={{ width: '100%', borderRadius: '14px', padding: '12px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                            />
+                        </div>
+                        <div style={{ flex: '1 1 140px' }}>
+                            <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>END DATE</label>
+                            <input 
+                                type="date" 
+                                value={endDate} 
+                                onChange={(e) => setEndDate(e.target.value)} 
+                                style={{ width: '100%', borderRadius: '14px', padding: '12px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                            />
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>CATEGORY</label>
+                        <div style={{ position: 'relative' }}>
+                            <select 
+                                value={category} 
+                                onChange={(e) => setCategory(e.target.value)}
+                                style={{ width: '100%', borderRadius: '14px', padding: '14px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)', appearance: 'none' }}
+                            >
+                                <option value="all">All Categories</option>
+                                {[...incomeCategories, ...expenseCategories].sort().map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => {
+                            setStartDate('');
+                            setEndDate('');
+                            setCategory('all');
+                            setFilterType('all');
+                            setSearchQuery('');
+                            setDebouncedSearch('');
+                        }}
+                        style={{ width: '100%', padding: '14px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.08)', color: 'var(--expense)', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '0.85rem', fontWeight: '700' }}
+                    >
+                        Reset All Filters
+                    </button>
+                    {isRefreshing && (
+                        <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                            <div className="loader" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                        </div>
+                    )}
                 </div>
             )}
 

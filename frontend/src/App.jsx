@@ -11,6 +11,7 @@ import Onboarding from './pages/Onboarding';
 import History from './pages/History';
 import Account from './pages/Account';
 import Stats from './pages/Stats';
+import Analytics from './pages/Analytics';
 import Footer from './components/Footer';
 import ReloadPrompt from './components/ReloadPrompt';
 import { SecurityProvider, useSecurity } from './context/SecurityContext';
@@ -110,6 +111,15 @@ function App() {
                       element={
                         <PrivateRoute>
                           <Stats />
+                          <Footer />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/analytics"
+                      element={
+                        <PrivateRoute>
+                          <Analytics />
                           <Footer />
                         </PrivateRoute>
                       }

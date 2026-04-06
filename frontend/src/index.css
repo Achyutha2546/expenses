@@ -99,6 +99,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none; /* Prevents pull-to-refresh for better PWA feel */
 }
 
 button {
@@ -370,17 +371,13 @@ select:focus {
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
-  }
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
 
-  70% {
-    box-shadow: 0 0 0 12px rgba(139, 92, 246, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
-  }
+.pulse-animation {
+  animation: pulse 2s infinite ease-in-out;
 }
 
 /* Privacy Mode with Asterisks */

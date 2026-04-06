@@ -4,9 +4,12 @@ const {
     getTransactions,
     addTransaction,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    exportTransactions
 } = require('../controllers/transactionController');
 const { protect } = require('../middleware/authMiddleware');
+
+router.get('/export', protect, exportTransactions);
 
 router.route('/')
     .get(protect, getTransactions)

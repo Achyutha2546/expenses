@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../utils/api';
-import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown, Settings, Target } from 'lucide-react';
 
 const AddEntry = () => {
     const navigate = useNavigate();
@@ -21,8 +21,14 @@ const AddEntry = () => {
     const [sources, setSources] = useState([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
         const fetchSources = async () => {
             try {
                 const { data } = await api.get('/sources');
@@ -49,6 +55,11 @@ const AddEntry = () => {
             }
         };
         fetchSources();
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
     }, [editingTransaction]);
 
     // When sourceId changes, ensure toSourceId doesn't point to the same account
@@ -63,8 +74,32 @@ const AddEntry = () => {
         }
     }, [formData.sourceId, formData.type, sources]);
 
+    const KEYWORD_MAP = {
+        'Food': ['swiggy', 'zomato', 'blinkit', 'zepto', 'restaurant', 'mcdonald', 'kfc', 'starbucks', 'grocery', 'dinner', 'lunch', 'breakfast', 'coffee'],
+        'Transport': ['uber', 'ola', 'rapido', 'petrol', 'fuel', 'metro', 'bus', 'train', 'flight', 'taxi'],
+        'Entertainment': ['netflix', 'hotstar', 'prime', 'spotify', 'movie', 'pvr', 'theatre', 'gaming', 'cinema', 'bookmyshow'],
+        'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'clothes', 'shoes', 'mall', 'shopping'],
+        'Utilities': ['electricity', 'water', 'gas', 'wifi', 'internet', 'recharge', 'rent', 'bill', 'mobile'],
+        'Investment': ['stock', 'mutual fund', 'crypto', 'sip', 'gold', 'zerodha', 'groww'],
+        'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'gym', 'health', 'clinic']
+    };
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        let newFormData = { ...formData, [name]: value };
+
+        // Auto-categorization logic
+        if ((name === 'purpose' || name === 'source') && (!formData.category || formData.category === 'General')) {
+            const lowerValue = value.toLowerCase();
+            for (const [category, keywords] of Object.entries(KEYWORD_MAP)) {
+                if (keywords.some(kw => lowerValue.includes(kw))) {
+                    newFormData.category = category;
+                    break;
+                }
+            }
+        }
+
+        setFormData(newFormData);
     };
 
     const handleSubmit = async (e) => {
@@ -109,6 +144,22 @@ const AddEntry = () => {
 
     return (
         <div className="container animate-in">
+            {/* Offline Banner */}
+            {!isOnline && (
+                <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid var(--expense)',
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }} className="pulse-animation">
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--expense)' }}></div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--expense)' }}>Offline: Entry creation disabled.</span>
+                </div>
+            )}
             {/* Header */}
             <header className="flex items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
@@ -304,6 +355,38 @@ const AddEntry = () => {
                         </div>
                     )}
 
+                    {/* Category Selector */}
+                    {formData.type !== 'transfer' && (
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Category</label>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                    <Target size={20} />
+                                </div>
+                                <select
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    required
+                                    style={{ paddingLeft: '48px', appearance: 'none' }}
+                                >
+                                    <option value="">Select Category</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Shopping">Shopping</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Investment">Investment</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
+                                    <ChevronDown size={18} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Date Selector */}
                     <div>
                         <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Date</label>
@@ -326,17 +409,20 @@ const AddEntry = () => {
                 {/* Submit Action */}
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !isOnline}
                     className="btn-primary"
                     style={{
                         marginTop: '12px',
                         padding: '18px',
                         fontSize: '1.1rem',
                         fontWeight: '700',
-                        borderRadius: '18px'
+                        borderRadius: '18px',
+                        opacity: !isOnline ? 0.6 : 1,
+                        cursor: !isOnline ? 'not-allowed' : 'pointer',
+                        filter: !isOnline ? 'grayscale(0.5)' : 'none'
                     }}
                 >
-                    {loading ? 'Processing...' : (editingTransaction ? 'Update Entry' : 'Create Transaction')}
+                    {loading ? 'Processing...' : (!isOnline ? 'Network Unavailable' : (editingTransaction ? 'Update Entry' : 'Create Transaction'))}
                 </button>
             </form>
 
