@@ -8,12 +8,17 @@ const AddEntry = () => {
     const location = useLocation();
     const editingTransaction = location.state?.transaction;
 
+    const getLocalTime = (date = new Date()) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    };
+
     const [formData, setFormData] = useState({
         type: 'expense',
         amount: '',
         sourceId: '',
         toSourceId: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalTime(),
         purpose: '',
         source: '',
         category: ''
@@ -40,7 +45,7 @@ const AddEntry = () => {
                         amount: editingTransaction.amount,
                         sourceId: editingTransaction.sourceId,
                         toSourceId: editingTransaction.toSourceId || '',
-                        date: new Date(editingTransaction.date).toISOString().split('T')[0],
+                        date: getLocalTime(new Date(editingTransaction.date)),
                         purpose: editingTransaction.purpose || '',
                         source: editingTransaction.source || '',
                         category: editingTransaction.category || ''
@@ -75,13 +80,13 @@ const AddEntry = () => {
     }, [formData.sourceId, formData.type, sources]);
 
     const KEYWORD_MAP = {
-        'Food': ['swiggy', 'zomato', 'blinkit', 'zepto', 'restaurant', 'mcdonald', 'kfc', 'starbucks', 'grocery', 'dinner', 'lunch', 'breakfast', 'coffee'],
-        'Transport': ['uber', 'ola', 'rapido', 'petrol', 'fuel', 'metro', 'bus', 'train', 'flight', 'taxi'],
-        'Entertainment': ['netflix', 'hotstar', 'prime', 'spotify', 'movie', 'pvr', 'theatre', 'gaming', 'cinema', 'bookmyshow'],
-        'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'clothes', 'shoes', 'mall', 'shopping'],
-        'Utilities': ['electricity', 'water', 'gas', 'wifi', 'internet', 'recharge', 'rent', 'bill', 'mobile'],
-        'Investment': ['stock', 'mutual fund', 'crypto', 'sip', 'gold', 'zerodha', 'groww'],
-        'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'gym', 'health', 'clinic']
+        'Food': ['swiggy', 'zomato', 'blinkit', 'zepto', 'restaurant', 'mcdonald', 'kfc', 'starbucks', 'grocery', 'dinner', 'lunch', 'breakfast', 'coffee', 'bakery', 'cafe', 'food'],
+        'Transport': ['uber', 'ola', 'rapido', 'petrol', 'fuel', 'metro', 'bus', 'train', 'flight', 'taxi', 'indianoil', 'shell', 'hpcl', 'cab'],
+        'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'clothes', 'shoes', 'mall', 'shopping', 'nykaa', 'meesho', 'zara', 'h&m'],
+        'Entertainment': ['netflix', 'hotstar', 'prime', 'spotify', 'movie', 'pvr', 'theatre', 'gaming', 'cinema', 'bookmyshow', 'multiplex', 'club'],
+        'Utilities': ['electricity', 'water', 'gas', 'wifi', 'internet', 'recharge', 'rent', 'bill', 'mobile', 'broadband', 'jio', 'airtel', 'vi'],
+        'Investment': ['stock', 'mutual fund', 'crypto', 'sip', 'gold', 'zerodha', 'groww', 'policy', 'insurance', 'upstox', 'angelone'],
+        'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'gym', 'health', 'clinic', 'apollo', 'pharmeasy', 'practo']
     };
 
     const handleChange = (e) => {
@@ -102,11 +107,17 @@ const AddEntry = () => {
         setFormData(newFormData);
     };
 
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        // Prepare payload: Remove irrelevant fields to avoid backend validation errors (e.g. empty strings for ObjectIds)
         const payload = { ...formData };
         if (payload.type !== 'transfer') {
             delete payload.toSourceId;
@@ -120,16 +131,22 @@ const AddEntry = () => {
         try {
             if (editingTransaction) {
                 await api.put(`/transactions/${editingTransaction._id}`, payload);
+                showToast('Transaction updated successfully!', 'success');
             } else {
                 await api.post('/transactions', payload);
+                showToast('Transaction added successfully!', 'success');
             }
-            navigate('/history');
+            
+            // Graceful redirect
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1000);
         } catch (err) {
             if (err.offline) {
-                alert(err.message);
-                navigate('/history');
+                showToast(err.message, 'error');
+                setTimeout(() => navigate('/history'), 2000);
             } else {
-                alert(err.response?.data?.message || 'Error saving transaction');
+                showToast(err.response?.data?.message || 'Error saving transaction', 'error');
             }
         } finally {
             setLoading(false);
@@ -144,6 +161,27 @@ const AddEntry = () => {
 
     return (
         <div className="container animate-in">
+            {/* Toast Notifications */}
+            {toast && (
+                <div className="toast-container">
+                    <div className={`toast ${toast.type}`}>
+                        <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: toast.type === 'success' ? 'var(--income)' : (toast.type === 'error' ? 'var(--expense)' : 'var(--primary)'),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white'
+                        }}>
+                             {toast.type === 'success' ? '✓' : (toast.type === 'error' ? '!' : 'i')}
+                        </div>
+                        <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{toast.message}</span>
+                    </div>
+                </div>
+            )}
+
             {/* Offline Banner */}
             {!isOnline && (
                 <div style={{
@@ -178,7 +216,7 @@ const AddEntry = () => {
                     >
                         <ArrowLeft size={22} />
                     </button>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.3px' }}>
                         {editingTransaction ? 'Edit Transaction' : 'New Transaction'}
                     </h1>
                 </div>
@@ -196,14 +234,15 @@ const AddEntry = () => {
                 </Link>
             </header>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                {/* Type Selector (Segmented Control) */}
+            <form onSubmit={handleSubmit} className="glass-card" style={{ padding: '24px', borderRadius: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                {/* Type Selector (Integrated) */}
                 <div style={{
-                    background: 'var(--bg-card)',
+                    background: 'var(--bg-dark)',
                     padding: '6px',
                     borderRadius: '16px',
                     display: 'flex',
-                    border: '1px solid var(--border)'
+                    border: '1px solid var(--border)',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
                 }}>
                     <button
                         type="button"
@@ -212,8 +251,9 @@ const AddEntry = () => {
                             background: formData.type === 'income' ? 'var(--income)' : 'transparent',
                             color: formData.type === 'income' ? 'white' : 'var(--text-secondary)',
                             padding: '12px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             borderRadius: '12px',
+                            fontSize: '0.85rem'
                         }}
                         onClick={() => setFormData({ ...formData, type: 'income', purpose: '', toSourceId: '' })}
                     >
@@ -226,8 +266,9 @@ const AddEntry = () => {
                             background: formData.type === 'transfer' ? 'var(--primary)' : 'transparent',
                             color: formData.type === 'transfer' ? 'white' : 'var(--text-secondary)',
                             padding: '12px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             borderRadius: '12px',
+                            fontSize: '0.85rem'
                         }}
                         onClick={() => setFormData({ ...formData, type: 'transfer', purpose: '', source: '' })}
                     >
@@ -240,8 +281,9 @@ const AddEntry = () => {
                             background: formData.type === 'expense' ? 'var(--expense)' : 'transparent',
                             color: formData.type === 'expense' ? 'white' : 'var(--text-secondary)',
                             padding: '12px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             borderRadius: '12px',
+                            fontSize: '0.85rem'
                         }}
                         onClick={() => setFormData({ ...formData, type: 'expense', source: '', toSourceId: '' })}
                     >
@@ -249,11 +291,11 @@ const AddEntry = () => {
                     </button>
                 </div>
 
-                {/* Amount Section */}
-                <div className="glass-card" style={{ textAlign: 'center', padding: '32px 24px', position: 'relative' }}>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '12px' }}>Enter Amount</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-secondary)' }}>₹</span>
+                {/* Hero Amount Input */}
+                <div style={{ textAlign: 'center', position: 'relative' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Amount</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-muted)', marginTop: '8px' }}>₹</span>
                         <input
                             name="amount"
                             type="number"
@@ -261,32 +303,34 @@ const AddEntry = () => {
                             onChange={handleChange}
                             required
                             placeholder="0"
+                            autoFocus
                             style={{
                                 background: 'transparent',
                                 border: 'none',
-                                fontSize: '3rem',
-                                fontWeight: '800',
+                                fontSize: '4rem',
+                                fontWeight: '900',
                                 textAlign: 'left',
                                 padding: '0',
                                 width: 'auto',
-                                minWidth: '100px',
+                                minWidth: '120px',
                                 maxWidth: '100%',
                                 color: 'var(--text-primary)',
-                                boxShadow: 'none'
+                                boxShadow: 'none',
+                                letterSpacing: '-2px'
                             }}
                         />
                     </div>
                 </div>
 
                 {/* Input Fields Group */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-6">
                     {/* Account Source */}
                     <div style={{ position: 'relative' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
-                            {formData.type === 'transfer' ? 'From Account' : 'Account'}
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {formData.type === 'transfer' ? 'Source Account' : 'Account'}
                         </label>
                         <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
                                 <Landmark size={20} />
                             </div>
                             <select
@@ -294,7 +338,7 @@ const AddEntry = () => {
                                 value={formData.sourceId}
                                 onChange={handleChange}
                                 required
-                                style={{ paddingLeft: '48px' }}
+                                style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
                             >
                                 {sources.length === 0 ? (
                                     <option value="">No sources found.</option>
@@ -308,9 +352,9 @@ const AddEntry = () => {
                     {/* Destination Account (Only for Transfer) */}
                     {formData.type === 'transfer' && (
                         <div style={{ position: 'relative' }}>
-                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>To Account</label>
+                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination Account</label>
                             <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
                                     <Landmark size={20} />
                                 </div>
                                 <select
@@ -318,7 +362,7 @@ const AddEntry = () => {
                                     value={formData.toSourceId}
                                     onChange={handleChange}
                                     required
-                                    style={{ paddingLeft: '48px' }}
+                                    style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
                                 >
                                     {sources.length === 0 ? (
                                         <option value="">No sources found.</option>
@@ -335,11 +379,11 @@ const AddEntry = () => {
                     {/* Purpose / Source Text */}
                     {formData.type !== 'transfer' && (
                         <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>
-                                {formData.type === 'income' ? 'From' : 'What for?'}
+                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {formData.type === 'income' ? 'Source Title' : 'What is this for?'}
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
                                     <FileText size={20} />
                                 </div>
                                 <input
@@ -349,7 +393,7 @@ const AddEntry = () => {
                                     onChange={handleChange}
                                     required
                                     placeholder={formData.type === 'income' ? "Employer, Gift, etc." : "Rent, Coffee, Food..."}
-                                    style={{ paddingLeft: '48px' }}
+                                    style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
                                 />
                             </div>
                         </div>
@@ -357,10 +401,10 @@ const AddEntry = () => {
 
                     {/* Category Selector */}
                     {formData.type !== 'transfer' && (
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Category</label>
+                        <div>
+                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
                             <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
                                     <Target size={20} />
                                 </div>
                                 <select
@@ -368,7 +412,7 @@ const AddEntry = () => {
                                     value={formData.category}
                                     onChange={handleChange}
                                     required
-                                    style={{ paddingLeft: '48px', appearance: 'none' }}
+                                    style={{ paddingLeft: '48px', appearance: 'none', height: '56px', fontSize: '1rem', fontWeight: '600' }}
                                 >
                                     <option value="">Select Category</option>
                                     <option value="Food">Food</option>
@@ -389,18 +433,18 @@ const AddEntry = () => {
 
                     {/* Date Selector */}
                     <div>
-                        <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', marginLeft: '4px' }}>Date</label>
+                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date & Time</label>
                         <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
                                 <Calendar size={20} />
                             </div>
                             <input
                                 name="date"
-                                type="date"
+                                type="datetime-local"
                                 value={formData.date}
                                 onChange={handleChange}
                                 required
-                                style={{ paddingLeft: '48px' }}
+                                style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
                             />
                         </div>
                     </div>
@@ -412,17 +456,17 @@ const AddEntry = () => {
                     disabled={loading || !isOnline}
                     className="btn-primary"
                     style={{
-                        marginTop: '12px',
                         padding: '18px',
                         fontSize: '1.1rem',
-                        fontWeight: '700',
-                        borderRadius: '18px',
+                        fontWeight: '800',
+                        borderRadius: '20px',
+                        marginTop: '10px',
                         opacity: !isOnline ? 0.6 : 1,
                         cursor: !isOnline ? 'not-allowed' : 'pointer',
-                        filter: !isOnline ? 'grayscale(0.5)' : 'none'
+                        boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)'
                     }}
                 >
-                    {loading ? 'Processing...' : (!isOnline ? 'Network Unavailable' : (editingTransaction ? 'Update Entry' : 'Create Transaction'))}
+                    {loading ? 'Processing...' : (!isOnline ? 'Network Unavailable' : (editingTransaction ? 'Update Entry' : 'Add Transaction'))}
                 </button>
             </form>
 

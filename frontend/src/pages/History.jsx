@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import {
     TrendingUp,
     TrendingDown,
@@ -31,6 +32,7 @@ const History = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [category, setCategory] = useState('all');
+    const { timeFormat } = useSettings();
     const [showSearch, setShowSearch] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -94,19 +96,39 @@ const History = () => {
         }
     };
 
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const handleDelete = async (id) => {
         if (window.confirm('Delete this transaction?')) {
             try {
                 await api.delete(`/transactions/${id}`);
                 setTransactions(transactions.filter(t => t._id !== id));
+                showToast('Entry deleted successfully', 'info');
             } catch (err) {
-                if (err.offline) {
-                    alert(err.message);
-                } else {
-                    alert('Failed to delete transaction');
-                }
+                showToast(err.offline ? err.message : 'Failed to delete transaction', 'error');
             }
         }
+    };
+
+    const getTimeLabel = (date) => {
+        const hours = new Date(date).getHours();
+        if (hours >= 5 && hours < 12) return { label: 'Morning', icon: <Sun size={12} color="#f59e0b" /> };
+        if (hours >= 12 && hours < 17) return { label: 'Afternoon', icon: <Sun size={12} color="#fbbf24" /> };
+        if (hours >= 17 && hours < 21) return { label: 'Evening', icon: <Moon size={12} color="#8b5cf6" /> };
+        return { label: 'Night', icon: <Moon size={12} color="#4c1d95" /> };
+    };
+
+    const formatTime = (date) => {
+        return new Date(date).toLocaleTimeString(undefined, { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: timeFormat === '12h'
+        });
     };
 
     if (loading) return (
@@ -123,6 +145,26 @@ const History = () => {
 
     return (
         <div className="container animate-in">
+            {/* Toast Notifications */}
+            {toast && (
+                <div className="toast-container">
+                    <div className={`toast ${toast.type}`}>
+                        <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: toast.type === 'success' ? 'var(--income)' : (toast.type === 'error' ? 'var(--expense)' : 'var(--primary)'),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white'
+                        }}>
+                             {toast.type === 'success' ? '✓' : (toast.type === 'error' ? '!' : 'i')}
+                        </div>
+                        <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{toast.message}</span>
+                    </div>
+                </div>
+            )}
             {/* Offline Banner */}
             {!window.navigator.onLine && (
                 <div style={{
@@ -158,7 +200,7 @@ const History = () => {
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>History</h1>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.3px' }}>History</h1>
                 </div>
                 <div className="flex gap-2">
                     <button
@@ -328,10 +370,17 @@ const History = () => {
             {/* Transaction List */}
             <div className="flex flex-col gap-6">
                 {displayTransactions.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-                        <Calendar size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-                        <p>No records found in history.</p>
-                        <Link to="/add" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '600', marginTop: '12px', display: 'block' }}>Start adding entries</Link>
+                    <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)', marginTop: '20px' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                            <Calendar size={40} color="var(--primary)" opacity={0.4} />
+                        </div>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No records found</h4>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
+                            We couldn't find any transactions. Try adjusting your search or filters.
+                        </p>
+                        <Link to="/add" style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', textDecoration: 'none', display: 'inline-block' }}>
+                            Add New Entry
+                        </Link>
                     </div>
                 ) : (
                     (() => {
@@ -383,47 +432,58 @@ const History = () => {
                                             }}
                                             onClick={() => navigate('/add', { state: { transaction: t } })}
                                             >
-                                                <div className="flex items-center gap-4">
-                                                    <div style={{
-                                                        width: '44px',
-                                                        height: '44px',
-                                                        borderRadius: '14px',
-                                                        background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
-                                                    </div>
-                                                    <div>
-                                                        <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '2px' }}>
-                                                            {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `Transfer to ${toSourceName}`}
-                                                        </h4>
-                                                        <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                            <Wallet size={12} />
-                                                            <span>{t.type === 'transfer' ? `From ${sourceName} → ${toSourceName}` : sourceName}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <p style={{
-                                                            fontWeight: '700',
-                                                            fontSize: '1rem',
-                                                            color: t.type === 'income' ? 'var(--income)' : t.type === 'expense' ? 'var(--text-primary)' : 'var(--primary)'
-                                                        }}>
-                                                            {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
-                                                        </p>
-                                                        <div className="flex gap-3 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
-                                                            <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
-                                                                <Edit2 size={14} />
-                                                            </Link>
-                                                            <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                 <div className="flex items-center gap-4">
+                                                     <div style={{
+                                                         width: '44px',
+                                                         height: '44px',
+                                                         borderRadius: '14px',
+                                                         background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                                                         display: 'flex',
+                                                         alignItems: 'center',
+                                                         justifyContent: 'center'
+                                                     }}>
+                                                         {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
+                                                     </div>
+                                                     <div>
+                                                         <div className="flex items-center gap-2 mb-1">
+                                                             <h4 style={{ fontSize: '0.95rem', fontWeight: '750', color: 'var(--text-primary)' }}>
+                                                                 {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `To ${toSourceName}`}
+                                                             </h4>
+                                                             {t.category && (
+                                                                <span className="badge" style={{ 
+                                                                    background: `var(--cat-${t.category.toLowerCase()}, var(--cat-other))`,
+                                                                    color: 'white',
+                                                                    opacity: 0.9,
+                                                                    padding: '1px 6px',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '0.6rem'
+                                                                }}>
+                                                                    {t.category}
+                                                                </span>
+                                                            )}
+                                                         </div>
+                                                         <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                                             <span>{formatTime(t.date)}</span>
+                                                             <span style={{ opacity: 0.3 }}>•</span>
+                                                             <span>{t.type === 'transfer' ? `From ${sourceName}` : sourceName}</span>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                                 <div style={{ textAlign: 'right' }}>
+                                                     <p className="text-amount" style={{
+                                                         color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
+                                                     }}>
+                                                         {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
+                                                     </p>
+                                                     <div className="flex gap-3 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
+                                                         <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
+                                                             <Edit2 size={14} />
+                                                         </Link>
+                                                         <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
+                                                             <Trash2 size={14} />
+                                                         </button>
+                                                     </div>
+                                                 </div>
                                             </div>
                                         );
                                     })}

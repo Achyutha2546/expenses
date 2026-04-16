@@ -1,13 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import api from '../utils/api';
+import bcrypt from 'bcryptjs';
 
 const SecurityContext = createContext();
 
 export const useSecurity = () => useContext(SecurityContext);
 
 export const SecurityProvider = ({ children }) => {
-    const [pin, setPin] = useState(localStorage.getItem('app_pin') || null);
-    const [isLocked, setIsLocked] = useState(!!pin);
+    const { user } = useAuth();
+    const [hasLock, setHasLock] = useState(false);
+    const [lockType, setLockType] = useState('pin');
+    const [isLocked, setIsLocked] = useState(false);
+    const [hasRecovery, setHasRecovery] = useState(false);
+    const [securityQuestion, setSecurityQuestion] = useState('');
     const [privacyMode, setPrivacyMode] = useState(localStorage.getItem('privacy_mode') === 'true');
+    const [loadingLock, setLoadingLock] = useState(true);
 
     useEffect(() => {
         if (privacyMode) {
@@ -20,75 +28,263 @@ export const SecurityProvider = ({ children }) => {
     }, [privacyMode]);
 
     useEffect(() => {
-        // Obscure app when in background to prevent screenshot snooping
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                if (pin) {
-                    setIsLocked(true);
+        let isMounted = true;
+        const fetchLockStatus = async () => {
+            if (!user) {
+                if (isMounted) {
+                    setIsLocked(false);
+                    setHasLock(false);
+                    setLoadingLock(false);
                 }
+                return;
+            }
+            try {
+                if (navigator.onLine) {
+                    const res = await api.get('/lock/status');
+                    if (res.data.hasLock && isMounted) {
+                        setHasLock(true);
+                        setLockType(res.data.lockType);
+                        setHasRecovery(res.data.hasRecovery);
+                        setSecurityQuestion(res.data.securityQuestion);
+                        
+                        // Check if we just logged in without unlocking
+                        // If session storage says 'unlocked_this_session', skip locking? No, PWA requires lock on open.
+                        if (!sessionStorage.getItem('app_unlocked')) {
+                            setIsLocked(true);
+                        }
+
+                        localStorage.setItem('offline_lock', 'true');
+                        localStorage.setItem('offline_lockType', res.data.lockType);
+                        if (res.data.pinHash) localStorage.setItem('offline_pinHash', res.data.pinHash);
+                        if (res.data.pattern) localStorage.setItem('offline_pattern', res.data.pattern);
+                        if (res.data.securityQuestion) localStorage.setItem('offline_securityQuestion', res.data.securityQuestion);
+                    } else if (isMounted) {
+                        setHasLock(false);
+                        setIsLocked(false);
+                        setHasRecovery(false);
+                        localStorage.removeItem('offline_lock');
+                    }
+                } else {
+                    if (localStorage.getItem('offline_lock') && isMounted) {
+                        setHasLock(true);
+                        setLockType(localStorage.getItem('offline_lockType') || 'pin');
+                        setHasRecovery(!!localStorage.getItem('offline_securityQuestion'));
+                        setSecurityQuestion(localStorage.getItem('offline_securityQuestion') || '');
+                        if (!sessionStorage.getItem('app_unlocked')) {
+                            setIsLocked(true);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to get lock status', err);
+            } finally {
+                if (isMounted) setLoadingLock(false);
             }
         };
 
-        // Block print screen key (optional countermeasure)
+        fetchLockStatus();
+        return () => { isMounted = false; };
+    }, [user, isLocked]);
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden && hasLock) {
+                setIsLocked(true);
+                sessionStorage.removeItem('app_unlocked');
+            }
+        };
         const handleKeyDown = (e) => {
             if (e.key === 'PrintScreen') {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(''); // Attempt to clear clipboard
-                }
-                if (pin) setIsLocked(true);
+                if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText('');
+                if (hasLock) setIsLocked(true);
             }
-        };
-
-        const handleContextMenu = (e) => {
-            // Optional: Disable long-press context menu on mobile to prevent easy copying of data
-            // Only if necessary, but helpful for anti-screenshot tools
-            // e.preventDefault(); 
-        };
-
-        // Attempting to block shortcuts that lead to screenshot/recording
-        const blockShortcuts = (e) => {
-            // Command+Shift+5/3/4 on Mac, Win+Shift+S etc. We can't actually catch all OS shortcuts,
-            // because OS intercepts them before browser, but we can try to obscure on blur
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('keyup', handleKeyDown);
-        
-        // Removed the blur listener as it's too aggressive for PWAs 
-        // when system prompts (like install or reload) appear.
-        
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('keyup', handleKeyDown);
         };
-    }, [pin]);
+    }, [hasLock]);
 
-    const savePin = (newPin) => {
-        localStorage.setItem('app_pin', newPin);
-        setPin(newPin);
-        setIsLocked(false);
-    };
+    // Inactivity Auto-Lock Feature
+    useEffect(() => {
+        if (!hasLock || isLocked) return;
 
-    const removePin = () => {
-        localStorage.removeItem('app_pin');
-        setPin(null);
-        setIsLocked(false);
-    };
+        let timeout;
+        const resetTimer = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                setIsLocked(true);
+                sessionStorage.removeItem('app_unlocked');
+            }, 30000); // 30 seconds
+        };
 
-    const verifyPin = (inputPin) => {
-        if (inputPin === pin) {
+        resetTimer(); // Initialize timer
+
+        const events = ['mousemove', 'keydown', 'touchstart', 'click', 'scroll'];
+        events.forEach(e => window.addEventListener(e, resetTimer));
+
+        return () => {
+            clearTimeout(timeout);
+            events.forEach(e => window.removeEventListener(e, resetTimer));
+        };
+    }, [hasLock, isLocked]);
+
+    const configureLock = async (type, credentials) => {
+        try {
+            const res = await api.post('/lock/set', { lockType: type, ...credentials });
+            setHasLock(true);
+            setLockType(type);
             setIsLocked(false);
-            return true;
+            sessionStorage.setItem('app_unlocked', 'true');
+            
+            localStorage.setItem('offline_lock', 'true');
+            localStorage.setItem('offline_lockType', type);
+            if (res.data.pinHash) localStorage.setItem('offline_pinHash', res.data.pinHash);
+            if (res.data.pattern) localStorage.setItem('offline_pattern', res.data.pattern);
+        } catch (err) {
+            throw err.response?.data?.message || 'Error setting lock';
         }
-        return false;
     };
 
-    const togglePrivacyMode = () => {
-        setPrivacyMode(!privacyMode);
+    const configureRecovery = async (question, answer) => {
+        try {
+            await api.post('/lock/set-recovery', { question, answer });
+            setHasRecovery(true);
+            setSecurityQuestion(question);
+            localStorage.setItem('offline_securityQuestion', question);
+        } catch (err) {
+            throw err.response?.data?.message || 'Error setting recovery';
+        }
     };
+
+    const removeLock = async () => {
+        try {
+            await api.delete('/lock/remove');
+            setHasLock(false);
+            setIsLocked(false);
+            setHasRecovery(false);
+            setSecurityQuestion('');
+            localStorage.removeItem('offline_lock');
+            localStorage.removeItem('offline_lockType');
+            localStorage.removeItem('offline_pinHash');
+            localStorage.removeItem('offline_pattern');
+            localStorage.removeItem('offline_securityQuestion');
+            sessionStorage.removeItem('app_unlocked');
+        } catch (err) {
+            throw err.response?.data?.message || 'Error removing lock';
+        }
+    };
+
+    const verifyLock = async (credentials) => {
+        // Fallback for offline or test mode
+        if (!navigator.onLine) {
+            let isValid = false;
+            if (lockType === 'pattern' && credentials.pattern) {
+                isValid = (credentials.pattern === localStorage.getItem('offline_pattern'));
+            } else if (lockType === 'pin' && credentials.pin) {
+                const storedHash = localStorage.getItem('offline_pinHash');
+                if (storedHash) {
+                    isValid = bcrypt.compareSync(credentials.pin, storedHash);
+                }
+            }
+            
+            if (isValid) {
+                // delayed unlock to allow UI animations
+                setTimeout(() => setIsLocked(false), 400);
+                sessionStorage.setItem('app_unlocked', 'true');
+                return { success: true };
+            }
+            return { success: false, message: 'Invalid offline credentials' };
+        }
+
+        // Standard Online Backend Validation
+        try {
+            await api.post('/lock/verify', credentials);
+            setTimeout(() => setIsLocked(false), 400);
+            sessionStorage.setItem('app_unlocked', 'true');
+            return { success: true };
+        } catch (err) {
+            return { 
+                success: false, 
+                message: err.response?.data?.message || 'Invalid input', 
+                locked: err.response?.data?.locked 
+            };
+        }
+    };
+
+    const recoverLockAPI = async (answer) => {
+        if (!navigator.onLine) {
+            return { success: false, message: 'Recovery requires active internet connection.' };
+        }
+        try {
+            const res = await api.post('/lock/recover', { answer });
+            if (res.data.success) {
+                // Backend removed the lock
+                setHasLock(false);
+                setIsLocked(false);
+                setHasRecovery(false);
+                setSecurityQuestion('');
+                localStorage.removeItem('offline_lock');
+                localStorage.removeItem('offline_lockType');
+                localStorage.removeItem('offline_pinHash');
+                localStorage.removeItem('offline_pattern');
+                localStorage.removeItem('offline_securityQuestion');
+                sessionStorage.setItem('app_unlocked', 'true');
+                return { success: true };
+            }
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || 'Recovery failed' };
+        }
+    };
+
+    const sendOtpAPI = async (email) => {
+        if (!navigator.onLine) {
+            return { success: false, message: 'Recovery requires active internet connection.' };
+        }
+        try {
+            const res = await api.post('/lock/send-otp', { email });
+            return { success: true, message: res.data.message };
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || 'Failed to send OTP' };
+        }
+    };
+
+    const verifyOtpAPI = async (email, otp) => {
+        if (!navigator.onLine) {
+            return { success: false, message: 'Recovery requires active internet connection.' };
+        }
+        try {
+            const res = await api.post('/lock/verify-otp', { email, otp });
+            if (res.data.success) {
+                // Backend removed the lock
+                setHasLock(false);
+                setIsLocked(false);
+                setHasRecovery(false);
+                setSecurityQuestion('');
+                localStorage.removeItem('offline_lock');
+                localStorage.removeItem('offline_lockType');
+                localStorage.removeItem('offline_pinHash');
+                localStorage.removeItem('offline_pattern');
+                localStorage.removeItem('offline_securityQuestion');
+                sessionStorage.setItem('app_unlocked', 'true');
+                return { success: true };
+            }
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || 'Invalid OTP' };
+        }
+    };
+
+    const togglePrivacyMode = () => setPrivacyMode(!privacyMode);
 
     return (
-        <SecurityContext.Provider value={{ pin, isLocked, privacyMode, savePin, removePin, verifyPin, togglePrivacyMode }}>
+        <SecurityContext.Provider value={{ 
+            hasLock, lockType, loadingLock, isLocked, privacyMode, hasRecovery, securityQuestion,
+            configureLock, removeLock, verifyLock, togglePrivacyMode, configureRecovery, recoverLockAPI,
+            sendOtpAPI, verifyOtpAPI
+        }}>
             {children}
         </SecurityContext.Provider>
     );

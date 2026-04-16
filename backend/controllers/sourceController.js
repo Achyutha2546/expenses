@@ -40,6 +40,7 @@ const addSource = async (req, res) => {
 
         res.status(201).json(source);
     } catch (error) {
+        console.error('Error adding source:', error);
         res.status(400).json({ message: error.message });
     }
 };

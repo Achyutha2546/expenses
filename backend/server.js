@@ -14,10 +14,14 @@ app.use(express.json());
 
 // API Routes (must come before static files)
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/lock', require('./routes/lockRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/sources', require('./routes/sourceRoutes'));
-app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api', require('./routes/analyticsRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes')); // Keep this for backward compatibility if needed, or remove if strictly following request
 app.use('/api/budget', require('./routes/budgetRoutes'));
+app.use('/api/set-budget', require('./routes/budgetRoutes')); // Match user request
+app.use('/api/get-budget', require('./routes/budgetRoutes')); // Match user request
 
 // Serve frontend in production
 const frontendDist = path.join(__dirname, '../frontend/dist');

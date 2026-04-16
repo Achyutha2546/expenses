@@ -1,4 +1,5 @@
 const Transaction = require('../models/transactionModel');
+const User = require('../models/userModel');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
 
@@ -32,7 +33,7 @@ const getTransactions = async (req, res) => {
             ];
         }
 
-        const transactions = await Transaction.find(query).sort({ date: -1, createdAt: -1 });
+        const transactions = await Transaction.find(query).sort({ date: -1, createdAt: -1 }).lean();
         res.json(transactions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -43,9 +44,17 @@ const addTransaction = async (req, res) => {
     const { type, amount, category, date, purpose, source, sourceId, toSourceId } = req.body;
 
     try {
+        const user = await User.findOne({ uid: req.user.uid });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // 1. Balance validation
+        if (type === 'expense' && amount > user.balance) {
+            return res.status(400).json({ success: false, message: 'Insufficient Funds' });
+        }
+
         // For transfers, create TWO transactions so both source balances update correctly:
-        // 1. An expense from the source (debit)
-        // 2. An income to the destination (credit)
         if (type === 'transfer') {
             const transferId = new mongoose.Types.ObjectId();
 
@@ -86,6 +95,14 @@ const addTransaction = async (req, res) => {
             source,
             sourceId,
         });
+
+        // 2. Update balance
+        if (type === 'income') {
+            user.balance += Number(amount);
+        } else if (type === 'expense') {
+            user.balance -= Number(amount);
+        }
+        await user.save();
 
         res.status(201).json(transaction);
     } catch (error) {
@@ -174,6 +191,26 @@ const updateTransaction = async (req, res) => {
         }
 
         // CASE 4: Normal Update (Income -> Income, Expense -> Income, etc.)
+        const user = await User.findOne({ uid: req.user.uid });
+        if (user) {
+            let newBalance = user.balance;
+            
+            // Revert old transaction
+            if (transaction.type === 'income') newBalance -= transaction.amount;
+            else if (transaction.type === 'expense') newBalance += transaction.amount;
+            
+            // Apply new transaction
+            if (type === 'income') newBalance += Number(amount);
+            else if (type === 'expense') newBalance -= Number(amount);
+            
+            if (newBalance < 0) {
+                return res.status(400).json({ success: false, message: 'Insufficient Funds: Update would result in negative balance' });
+            }
+            
+            user.balance = newBalance;
+            await user.save();
+        }
+
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             req.params.id,
             req.body,
@@ -202,6 +239,19 @@ const deleteTransaction = async (req, res) => {
         if (transaction.transferId) {
             await Transaction.deleteMany({ transferId: transaction.transferId });
         } else {
+            const user = await User.findOne({ uid: req.user.uid });
+            if (user) {
+                let newBalance = user.balance;
+                if (transaction.type === 'income') newBalance -= transaction.amount;
+                else if (transaction.type === 'expense') newBalance += transaction.amount;
+                
+                if (newBalance < 0) {
+                    return res.status(400).json({ success: false, message: 'Cannot delete income: Insufficient Funds' });
+                }
+                
+                user.balance = newBalance;
+                await user.save();
+            }
             await transaction.deleteOne();
         }
 
@@ -216,6 +266,8 @@ const deleteTransaction = async (req, res) => {
  * @route   GET /api/transactions/export
  * @access  Private
  */
+
+
 const exportTransactions = async (req, res) => {
     try {
         const transactions = await Transaction.find({ userId: req.user.uid })

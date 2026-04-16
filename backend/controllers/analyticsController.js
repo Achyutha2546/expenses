@@ -125,6 +125,24 @@ const getSpendingInsights = async (req, res) => {
             }
         ]);
 
+        const topCategoryData = await Transaction.aggregate([
+            {
+                $match: {
+                    userId: req.user.uid,
+                    type: 'expense',
+                    date: { $gte: firstDayCurrentMonth }
+                }
+            },
+            {
+                $group: {
+                    _id: '$category',
+                    total: { $sum: '$amount' }
+                }
+            },
+            { $sort: { total: -1 } },
+            { $limit: 1 }
+        ]);
+
         const prevMonthTotal = await Transaction.aggregate([
             {
                 $match: {
@@ -143,6 +161,8 @@ const getSpendingInsights = async (req, res) => {
 
         const current = currentMonthTotal[0]?.total || 0;
         const previous = prevMonthTotal[0]?.total || 0;
+        const topCategory = topCategoryData[0]?._id || 'General';
+        const topCategoryAmount = topCategoryData[0]?.total || 0;
         
         let changePercent = 0;
         let message = '';
@@ -150,18 +170,18 @@ const getSpendingInsights = async (req, res) => {
 
         if (previous > 0) {
             changePercent = ((current - previous) / previous) * 100;
-            if (changePercent > 5) {
-                message = `Spending increased by ${Math.abs(changePercent).toFixed(0)}% compared to last month. Watch your budget!`;
+            if (changePercent > 10) {
+                message = `Spending is up by ${Math.abs(changePercent).toFixed(0)}% MoM. ${topCategory} is your biggest expense.`;
                 trend = 'up';
-            } else if (changePercent < -5) {
-                message = `Great job! You've spent ${Math.abs(changePercent).toFixed(0)}% less than last month.`;
+            } else if (changePercent < -10) {
+                message = `Great! Spending is down ${Math.abs(changePercent).toFixed(0)}%. You're saving more this month!`;
                 trend = 'down';
             } else {
-                message = 'Your spending is consistent with last month.';
+                message = `Your spending is stable. ${topCategory} remains your primary expense at ₹${topCategoryAmount.toLocaleString()}.`;
                 trend = 'neutral';
             }
         } else {
-            message = current > 0 ? "You're off to a strong start this month!" : "Start tracking to see your spending insights.";
+            message = current > 0 ? `${topCategory} is your top category so far. Keep tracking to see MoM trends!` : "Start tracking to see your spending insights.";
         }
 
         res.json({
@@ -169,7 +189,9 @@ const getSpendingInsights = async (req, res) => {
             prevMonthTotal: previous,
             changePercent,
             message,
-            trend
+            trend,
+            topCategory,
+            topCategoryAmount
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -8,15 +8,16 @@ const {
     exportTransactions
 } = require('../controllers/transactionController');
 const { protect } = require('../middleware/authMiddleware');
+const asyncHandler = require('../utils/asyncHandler');
 
-router.get('/export', protect, exportTransactions);
+router.get('/export', protect, asyncHandler(exportTransactions));
 
 router.route('/')
-    .get(protect, getTransactions)
-    .post(protect, addTransaction);
+    .get(protect, asyncHandler(getTransactions))
+    .post(protect, asyncHandler(addTransaction));
 
 router.route('/:id')
-    .put(protect, updateTransaction)
-    .delete(protect, deleteTransaction);
+    .put(protect, asyncHandler(updateTransaction))
+    .delete(protect, asyncHandler(deleteTransaction));
 
 module.exports = router;

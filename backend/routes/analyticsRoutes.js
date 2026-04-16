@@ -5,6 +5,6 @@ const { protect } = require('../middleware/authMiddleware');
 
 router.get('/category-summary', protect, getCategorySummary);
 router.get('/monthly-summary', protect, getMonthlySummary);
-router.get('/insights', protect, getSpendingInsights);
+router.get('/analytics/insights', protect, getSpendingInsights);
 
 module.exports = router;

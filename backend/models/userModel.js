@@ -22,6 +22,18 @@ const userSchema = new mongoose.Schema({
     photoURL: {
         type: String,
         default: ''
+    },
+    balance: {
+        type: Number,
+        default: 0
+    },
+    otp: {
+        type: String,
+        default: null
+    },
+    otpExpiry: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 

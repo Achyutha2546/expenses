@@ -28,18 +28,21 @@ ChartJS.register(
 const Analytics = () => {
     const [categoryData, setCategoryData] = useState([]);
     const [monthlyData, setMonthlyData] = useState([]);
+    const [insights, setInsights] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const [catRes, monthRes] = await Promise.all([
-                    api.get('/analytics/category-summary'),
-                    api.get('/analytics/monthly-summary')
+                const [catRes, monthRes, insightRes] = await Promise.all([
+                    api.get('/category-summary'),
+                    api.get('/monthly-summary'),
+                    api.get('/analytics/insights')
                 ]);
                 setCategoryData(catRes.data);
                 setMonthlyData(monthRes.data);
+                setInsights(insightRes.data);
             } catch (err) {
                 console.error('Error fetching analytics:', err);
             } finally {
@@ -56,16 +59,17 @@ const Analytics = () => {
             {
                 data: categoryData.map(c => c.totalAmount),
                 backgroundColor: [
-                    '#8b5cf6', // Violet
-                    '#3b82f6', // Blue
-                    '#10b981', // Emerald
-                    '#f43f5e', // Rose
-                    '#f59e0b', // Amber
-                    '#06b6d4', // Cyan
-                    '#6366f1', // Indigo
+                    '#7c3aed', // Primary Violet
+                    '#2563eb', // Blue
+                    '#059669', // Emerald
+                    '#e11d48', // Rose
+                    '#d97706', // Amber
+                    '#0891b2', // Cyan
+                    '#4f46e5', // Indigo
                 ],
-                borderWidth: 0,
-                hoverOffset: 20
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 2,
+                hoverOffset: 25
             },
         ],
     };
@@ -156,6 +160,62 @@ const Analytics = () => {
                 </button>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Financial Analytics</h1>
             </header>
+
+            {/* Spending Insights Card */}
+            {insights && (
+                <section className="mb-10 animate-in" style={{ animationDelay: '0.1s' }}>
+                    <div className="glass-card" style={{ 
+                        padding: '24px', 
+                        borderRadius: '28px', 
+                        background: insights.trend === 'up' 
+                            ? 'linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.05) 100%)' 
+                            : insights.trend === 'down'
+                                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)'
+                                : 'var(--glass)',
+                        border: insights.trend === 'up' 
+                            ? '1px solid rgba(244, 63, 94, 0.2)' 
+                            : insights.trend === 'down'
+                                ? '1px solid rgba(16, 185, 129, 0.2)'
+                                : '1px solid var(--border)'
+                    }}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    {insights.trend === 'up' ? <TrendingUp size={18} color="#f43f5e" /> : insights.trend === 'down' ? <TrendingDown size={18} color="#10b981" /> : <TrendingUp size={18} color="var(--primary)" />}
+                                    <span style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: insights.trend === 'up' ? '#f43f5e' : insights.trend === 'down' ? '#10b981' : 'var(--text-secondary)' }}>
+                                        Monthly Insight
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '600', lineHeight: '1.4', color: 'var(--text-primary)' }}>
+                                    {insights.message}
+                                </p>
+                                {insights.topCategory && insights.topCategory !== 'General' && (
+                                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                                        <div style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }}></div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                                                Top Category: <span style={{ color: 'var(--text-primary)' }}>{insights.topCategory}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                padding: '8px 12px',
+                                borderRadius: '12px',
+                                textAlign: 'center',
+                                minWidth: '80px'
+                            }}>
+                                <p style={{ fontSize: '0.65rem', fontWeight: '700', color: '#666', textTransform: 'uppercase' }}>Change</p>
+                                <p style={{ fontSize: '1.2rem', fontWeight: '800', color: insights.trend === 'up' ? '#f43f5e' : insights.trend === 'down' ? '#10b981' : '#333' }}>
+                                    {insights.changePercent > 0 ? '+' : ''}{insights.changePercent.toFixed(0)}%
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Category Breakdown */}
             <section className="mb-10">

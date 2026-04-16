@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SettingsProvider } from './context/SettingsContext';
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -15,7 +16,7 @@ import Analytics from './pages/Analytics';
 import Footer from './components/Footer';
 import ReloadPrompt from './components/ReloadPrompt';
 import { SecurityProvider, useSecurity } from './context/SecurityContext';
-import PinLock from './components/PinLock';
+import LockScreen from './components/LockScreen';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -40,14 +41,19 @@ const PublicRoute = ({ children, redirectTo = "/dashboard", forceRedirect = fals
 
 const ProtectedApp = ({ children }) => {
   const { isLocked } = useSecurity();
-  if (isLocked) return <PinLock />;
-  return children;
+  return (
+    <>
+      {children}
+      {isLocked && <LockScreen />}
+    </>
+  );
 };
 
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
+      <SettingsProvider>
+        <AuthProvider>
         <SecurityProvider>
           <Router>
             <ProtectedApp>
@@ -141,6 +147,7 @@ function App() {
           </Router>
         </SecurityProvider>
       </AuthProvider>
+      </SettingsProvider>
     </ThemeProvider >
   );
 }

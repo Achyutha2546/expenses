@@ -51,7 +51,7 @@ const Dashboard = () => {
             const [transRes, sourcesRes, budgetRes, insightsRes] = await Promise.all([
                 api.get('/transactions'),
                 api.get('/sources'),
-                api.get('/budget'),
+                api.get('/get-budget'),
                 api.get('/analytics/insights')
             ]);
             setTransactions(transRes.data);
@@ -104,8 +104,9 @@ const Dashboard = () => {
     const handleUpdateBudget = async () => {
         if (!newBudgetVal || isNaN(newBudgetVal)) return;
         try {
-            const res = await api.post('/budget', { amount: parseFloat(newBudgetVal) });
-            setBudget(res.data);
+            const res = await api.post('/set-budget', { amount: parseFloat(newBudgetVal) });
+            // Re-fetch to get the updated aggregations
+            fetchData();
             setShowBudgetModal(false);
             setNewBudgetVal('');
         } catch (err) {
@@ -141,10 +142,10 @@ const Dashboard = () => {
         return acc;
     }, { income: 0, expense: 0, monthlyIncome: 0, monthlyExpense: 0, sources: {} });
 
-    const budgetStatus = budget.amount > 0 ? (totals.monthlyExpense / budget.amount) * 100 : 0;
-    const isOverBudget = totals.monthlyExpense > budget.amount;
+    const budgetStatus = budget.amount > 0 ? (budget.totalSpent / budget.amount) * 100 : 0;
+    const isOverBudget = budget.isOverBudget;
 
-    const balance = totals.income - totals.expense;
+    const balance = budget.userBalance !== undefined ? budget.userBalance : (totals.income - totals.expense);
 
     if (loading) return (
         <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
@@ -172,24 +173,26 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Header */}
+            {/* Branded Header */}
             <header className="flex justify-between items-center mb-6" style={{ padding: '0 4px' }}>
                 <div className="flex items-center gap-3">
                     <Link to="/account" style={{
                         width: '44px',
                         height: '44px',
-                        borderRadius: '50%',
+                        borderRadius: '14px',
                         background: 'var(--primary-gradient)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 8px 16px -4px rgba(139, 92, 246, 0.5), inset 0 2px 4px rgba(255,255,255,0.2)'
+                        boxShadow: '0 6px 16px -4px rgba(79, 70, 229, 0.45)',
+                        textDecoration: 'none',
+                        flexShrink: 0
                     }}>
-                        <User size={22} color="white" />
+                        <span style={{ color: 'white', fontSize: '1.3rem', fontWeight: '900', letterSpacing: '-1px', fontFamily: 'Poppins, sans-serif' }}>S</span>
                     </Link>
                     <div style={{ overflow: 'hidden' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '-2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Welcome back,</p>
-                        <h1 style={{ fontSize: '1.1rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email?.split('@')[0] || 'User'}</h1>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '0px' }}>Spendly</p>
+                        <h1 style={{ fontSize: '1.1rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Hi, {user?.email?.split('@')[0] || 'User'} 👋</h1>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -223,6 +226,58 @@ const Dashboard = () => {
                     </Link>
                 </div>
             </header>
+
+            {/* Main Summary Section */}
+            <div className="mb-10">
+                {/* Hero Balance Card */}
+                <div className="glass-card mb-6" style={{
+                    padding: '32px 24px',
+                    background: 'var(--primary-gradient)',
+                    border: 'none',
+                    borderRadius: '28px',
+                    boxShadow: '0 20px 40px -12px rgba(79, 70, 229, 0.4)',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <p style={{ fontSize: '0.85rem', fontWeight: '600', opacity: 0.9, marginBottom: '8px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Current Balance</p>
+                        <h2 style={{ fontSize: '2.75rem', fontWeight: '800', letterSpacing: '-1.5px', marginBottom: '4px', color: 'white' }}>
+                            ₹{balance.toLocaleString()}
+                        </h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.9 }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>Live Updates Active</span>
+                        </div>
+                    </div>
+                    {/* Decorative Blobs */}
+                    <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+                </div>
+
+                {/* Secondary Stats Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="glass-card" style={{ padding: '20px', borderRadius: '24px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <TrendingUp size={16} color="var(--income)" />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Income</span>
+                        </div>
+                        <p style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--income)' }}>+₹{totals.monthlyIncome.toLocaleString()}</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>This Month</p>
+                    </div>
+                    <div className="glass-card" style={{ padding: '20px', borderRadius: '24px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(244, 63, 94, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <TrendingDown size={16} color="var(--expense)" />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Expenses</span>
+                        </div>
+                        <p style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--expense)' }}>-₹{totals.monthlyExpense.toLocaleString()}</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>This Month</p>
+                    </div>
+                </div>
+            </div>
 
             {/* Monthly Budget Card */}
             <div className="glass-card mb-8" style={{
@@ -260,34 +315,30 @@ const Dashboard = () => {
 
                 <div className="mb-4">
                     <div className="flex justify-between mb-2">
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Spent: ₹{totals.monthlyExpense.toLocaleString()}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Spent: ₹{(budget.totalSpent || 0).toLocaleString()}</span>
                         <span style={{ fontSize: '0.85rem', fontWeight: '700', color: budget.amount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                             {budget.amount > 0 ? `₹${budget.amount.toLocaleString()}` : 'Set Budget'}
                         </span>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ 
-                            width: `${Math.min(budgetStatus, 100)}%`, 
-                            height: '100%', 
-                            background: budgetStatus > 90 ? 'var(--expense)' : budgetStatus > 70 ? '#f59e0b' : 'var(--income)',
-                            transition: 'width 0.5s ease-out'
-                        }}></div>
-                    </div>
+                    <div className="progress-bar">
+  <div className="progress-fill" style={{ width: `${Math.min(budgetStatus, 100)}%`, background: isOverBudget ? 'var(--expense)' : 'var(--income)' }}></div>
+</div>
                 </div>
 
                 <div className="flex justify-between items-center">
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         {budget.amount > 0 ? (
                             isOverBudget 
-                                ? `Exceeded by ₹${(totals.monthlyExpense - budget.amount).toLocaleString()}` 
-                                : `₹${(budget.amount - totals.monthlyExpense).toLocaleString()} remaining`
+                                ? `Exceeded by ₹${(budget.totalSpent - budget.amount).toLocaleString()}` 
+                                : `₹${(budget.amount - (budget.totalSpent || 0)).toLocaleString()} remaining`
                         ) : 'Keep your spending in check'}
                     </p>
-                    {isOverBudget && (
-                        <div style={{ padding: '4px 8px', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--expense)' }}>ALERT</span>
-                        </div>
-                    )}
+                    {budgetStatus >= 100 && (
+  <div className="alert-danger">Budget Exceeded</div>
+)}
+{budgetStatus >= 80 && budgetStatus < 100 && (
+  <div className="alert-warning">Approaching Limit ({budgetStatus.toFixed(0)}% used)</div>
+)}
                 </div>
             </div>
 
@@ -327,6 +378,12 @@ const Dashboard = () => {
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4', fontWeight: '500' }}>
                                 {insights.message}
                             </p>
+                            {insights.topCategory && insights.topCategory !== 'General' && (
+                                <div style={{ marginTop: '8px', padding: '4px 10px', background: 'var(--glass)', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--border)' }}>
+                                    <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--text-muted)' }}>TOP AREA:</span>
+                                    <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--primary)' }}>{insights.topCategory.toUpperCase()}</span>
+                                </div>
+                            )}
                         </div>
                         <div style={{ textAlign: 'right' }}>
                             <span style={{ 
@@ -342,42 +399,38 @@ const Dashboard = () => {
             )}
 
             {/* Quick Actions Grid */}
-            <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Quick Actions</h3>
+            <div className="mb-10">
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Shortcuts</h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                     {[
-                        { to: '/add', icon: Plus, label: 'Add', color: 'var(--primary)', bg: 'rgba(139, 92, 246, 0.12)', protected: true },
                         { to: '/sources', icon: Wallet, label: 'Wallet', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
-                        { to: '/history', icon: History, label: 'History', color: 'var(--income)', bg: 'rgba(16, 185, 129, 0.12)' },
+                        { to: '/history', icon: History, label: 'Activity', color: 'var(--income)', bg: 'rgba(16, 185, 129, 0.12)' },
                         { to: '/sources', icon: Settings, label: 'Settings', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' }
-                    ].map((btn, i) => {
-                        const isDisabled = btn.protected && !isOnline;
-                        return (
-                            <div key={i} style={{ opacity: isDisabled ? 0.4 : 1, transition: 'opacity 0.3s' }}>
-                                <Link 
-                                    to={isDisabled ? '#' : btn.to} 
-                                    onClick={(e) => isDisabled && e.preventDefault()}
-                                    style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: isDisabled ? 'not-allowed' : 'pointer' }}
-                                >
-                                    <div style={{
-                                        width: '100%',
-                                        aspectRatio: '1/1',
-                                        borderRadius: '16px',
-                                        background: btn.bg,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        transition: 'transform 0.2s ease'
-                                    }} className="action-btn">
-                                        <btn.icon size={24} color={btn.color} />
-                                    </div>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--text-secondary)' }}>{btn.label}</span>
-                                </Link>
-                            </div>
-                        );
-                    })}
+                    ].map((btn, i) => (
+                        <div key={i}>
+                            <Link 
+                                to={btn.to} 
+                                style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
+                            >
+                                <div style={{
+                                    width: '100%',
+                                    aspectRatio: '1/1',
+                                    borderRadius: '20px',
+                                    background: btn.bg,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'transform 0.2s ease',
+                                    border: '1px solid rgba(255,255,255,0.05)'
+                                }} className="action-btn">
+                                    <btn.icon size={26} color={btn.color} />
+                                </div>
+                                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>{btn.label}</span>
+                            </Link>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -404,7 +457,7 @@ const Dashboard = () => {
                     </div>
                     <button 
                         onClick={handleInstallClick}
-                        style={{ background: 'white', color: 'var(--primary)', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700' }}
+                        style={{ background: 'var(--bg-card)', color: 'var(--primary)', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700' }}
                     >
                         Install
                     </button>
@@ -412,10 +465,10 @@ const Dashboard = () => {
             )}
 
             {/* My Accounts Section */}
-            <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>My Accounts</h3>
-                    <Link to="/sources" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '600' }}>See All</Link>
+            <div className="mb-10">
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>My Accounts</h3>
+                    <Link to="/sources" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>See All</Link>
                 </div>
                 <div className="flex flex-col gap-3">
                     {sources.slice(0, 3).map((s) => (
@@ -439,15 +492,26 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Transactions Peek */}
-            <div className="mb-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Recent Transactions</h3>
-                    <Link to="/history" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '600' }}>View All</Link>
+            <div className="mb-20">
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Recent Activity</h3>
+                    <Link to="/history" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>View History</Link>
                 </div>
                 {transactions.length === 0 ? (
-                    <div className="glass-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
-                        <Plus size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-                        <p>No transactions yet</p>
+                    <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                            <TrendingUp size={40} color="var(--primary)" opacity={0.4} />
+                        </div>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No activity yet</h4>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
+                            Start tracking your finances by adding your first income or expense!
+                        </p>
+                        <button 
+                            onClick={() => navigate('/add')}
+                            style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700' }}
+                        >
+                            Get Started
+                        </button>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-1">
@@ -469,17 +533,28 @@ const Dashboard = () => {
                                         {t.type === 'income' ? <TrendingUp size={18} color="var(--income)" /> : <TrendingDown size={18} color="var(--expense)" />}
                                     </div>
                                     <div>
-                                        <h4 style={{ fontSize: '0.9rem', fontWeight: '500' }}>
+                                        <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
                                             {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : 'Transfer'}
                                         </h4>
-                                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                            {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {t.category || 'General'}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-meta">
+                                                {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {new Date(t.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                            </p>
+                                            {t.category && (
+                                                <span className="badge" style={{ 
+                                                    background: `var(--cat-${t.category.toLowerCase()}, var(--cat-other))`,
+                                                    color: 'white',
+                                                    padding: '1px 6px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.6rem'
+                                                }}>
+                                                    {t.category}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <span style={{
-                                    fontWeight: '700',
-                                    fontSize: '0.95rem',
+                                <span className="text-amount" style={{ 
                                     color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
                                 }}>
                                     {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
@@ -490,8 +565,25 @@ const Dashboard = () => {
                 )}
             </div>
 
+            {/* Floating Action Button */}
+            <button
+                onClick={() => navigate('/add')}
+                className="fab"
+                style={{
+                    position: 'fixed',
+                    bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))',
+                    right: '20px',
+                    zIndex: 90,
+                    width: '60px',
+                    height: '60px',
+                    boxShadow: '0 12px 24px -6px rgba(79, 70, 229, 0.5)'
+                }}
+            >
+                <Plus size={32} />
+            </button>
+
             {/* Space for Bottom Nav */}
-            <div style={{ height: '20px' }}></div>
+            <div style={{ height: '40px' }}></div>
 
             {/* Peek Overlay (Centered) */}
             {peekData && (
