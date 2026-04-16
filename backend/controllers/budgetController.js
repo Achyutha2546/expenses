@@ -48,7 +48,36 @@ const getBudget = async (req, res) => {
         
         // Fetch User to get balance
         const user = await User.findOne({ uid: req.user.uid });
-        const userBalance = user?.balance || 0;
+        let userBalance = user?.balance || 0;
+
+        // Self-healing: If balance is 0 but transactions exist, recalculate
+        if (user && userBalance === 0) {
+            const transCount = await Transaction.countDocuments({ userId: req.user.uid });
+            if (transCount > 0) {
+                const result = await Transaction.aggregate([
+                    { $match: { userId: req.user.uid } },
+                    {
+                        $group: {
+                            _id: null,
+                            total: {
+                                $sum: {
+                                    $cond: [
+                                        { $eq: ["$type", "income"] }, 
+                                        "$amount", 
+                                        { $cond: [{ $eq: ["$type", "expense"] }, { $multiply: ["$amount", -1] }, 0] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]);
+                if (result.length > 0) {
+                    user.balance = result[0].total;
+                    await user.save();
+                    userBalance = user.balance;
+                }
+            }
+        }
 
         res.json({
             amount: limit,

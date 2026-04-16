@@ -1,5 +1,5 @@
-const Source = require('../models/sourceModel');
 const Transaction = require('../models/transactionModel');
+const User = require('../models/userModel');
 
 const getSources = async (req, res) => {
     try {
@@ -36,6 +36,13 @@ const addSource = async (req, res) => {
                 date: new Date(),
                 purpose: 'Initial Balance Setup'
             });
+
+            // Sync user balance
+            const user = await User.findOne({ uid: req.user.uid });
+            if (user) {
+                user.balance = (user.balance || 0) + Number(initialBalance);
+                await user.save();
+            }
         }
 
         res.status(201).json(source);
@@ -57,7 +64,20 @@ const deleteSource = async (req, res) => {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
-        // Delete all transactions associated with this source
+        // Delete all transactions associated with this source and sync balance
+        const transactionsList = await Transaction.find({ sourceId: req.params.id });
+        const user = await User.findOne({ uid: req.user.uid });
+        
+        if (user && transactionsList.length > 0) {
+            let balanceAdjustment = 0;
+            transactionsList.forEach(t => {
+                if (t.type === 'income') balanceAdjustment -= t.amount;
+                else if (t.type === 'expense') balanceAdjustment += t.amount;
+            });
+            user.balance = (user.balance || 0) + balanceAdjustment;
+            await user.save();
+        }
+
         await Transaction.deleteMany({ sourceId: req.params.id });
 
         await source.deleteOne();
@@ -80,6 +100,8 @@ const completeOnboarding = async (req, res) => {
 
     try {
         const createdSources = [];
+        let totalInitialBalance = 0;
+
         for (const s of sources) {
             // Create the source
             const source = await Source.create({
@@ -90,6 +112,7 @@ const completeOnboarding = async (req, res) => {
 
             // Create initial balance transaction if balance > 0
             if (s.balance > 0) {
+                totalInitialBalance += Number(s.balance);
                 await Transaction.create({
                     userId: req.user.uid,
                     type: 'income',
@@ -100,6 +123,14 @@ const completeOnboarding = async (req, res) => {
                     date: new Date(),
                     purpose: 'Initial Balance Setup'
                 });
+            }
+        }
+
+        if (totalInitialBalance > 0) {
+            const user = await User.findOne({ uid: req.user.uid });
+            if (user) {
+                user.balance = (user.balance || 0) + totalInitialBalance;
+                await user.save();
             }
         }
         res.status(201).json(createdSources);
