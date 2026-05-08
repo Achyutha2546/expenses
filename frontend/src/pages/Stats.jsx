@@ -12,7 +12,8 @@ import {
     ArrowRight,
     BarChart3,
     PieChart,
-    Settings
+    Settings,
+    Plus
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
