@@ -246,23 +246,60 @@ const AddEntry = () => {
 
             {/* User Selection Carousel (Only for Transfer) */}
             {formData.type === 'transfer' && (
-                <div className="flex gap-4 overflow-x-auto pb-8 mb-4 px-2" style={{ scrollbarWidth: 'none' }}>
-                    {users.map((u, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2" style={{ minWidth: '70px' }}>
-                            <div style={{ 
-                                width: '64px', 
-                                height: '64px', 
-                                borderRadius: '24px', 
-                                overflow: 'hidden',
-                                border: u.name === '@Daisio09' ? '3px solid #ddd6fe' : 'none',
-                                padding: u.name === '@Daisio09' ? '4px' : '0'
-                            }}>
-                                <img src={u.img} style={{ width: '100%', height: '100%', borderRadius: '20px', objectFit: 'cover' }} alt={u.name} />
+                <>
+                    <div className="flex gap-4 overflow-x-auto pb-8 mb-4 px-2" style={{ scrollbarWidth: 'none' }}>
+                        {users.map((u, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2" style={{ minWidth: '70px' }}>
+                                <div style={{ 
+                                    width: '64px', 
+                                    height: '64px', 
+                                    borderRadius: '24px', 
+                                    overflow: 'hidden',
+                                    border: u.name === '@Daisio09' ? '3px solid #ddd6fe' : 'none',
+                                    padding: u.name === '@Daisio09' ? '4px' : '0'
+                                }}>
+                                    <img src={u.img} style={{ width: '100%', height: '100%', borderRadius: '20px', objectFit: 'cover' }} alt={u.name} />
+                                </div>
+                                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: u.name === '@Daisio09' ? 'black' : '#94a3b8' }}>{u.name}</span>
                             </div>
-                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: u.name === '@Daisio09' ? 'black' : '#94a3b8' }}>{u.name}</span>
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                        <div className="flex flex-col gap-2">
+                            <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px' }}>From Source</label>
+                            <select
+                                name="sourceId"
+                                value={formData.sourceId}
+                                onChange={handleChange}
+                                style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
+                            >
+                                {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                            </select>
                         </div>
-                    ))}
-                </div>
+                        <div className="flex flex-col gap-2">
+                            <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px' }}>Receive Source</label>
+                            <select
+                                name="toSourceId"
+                                value={formData.toSourceId}
+                                onChange={handleChange}
+                                style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
+                            >
+                                {sources.filter(s => s._id !== formData.sourceId).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '32px' }}>
+                        <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px', marginBottom: '8px', display: 'block' }}>Note (Optional)</label>
+                        <input
+                            name="purpose"
+                            value={formData.purpose}
+                            onChange={handleChange}
+                            placeholder="Reason for transfer..."
+                            style={{ width: '100%', background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
+                        />
+                    </div>
+                </>
             )}
 
             {/* Essential Fields for Non-Transfer */}
