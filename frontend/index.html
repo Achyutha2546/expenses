@@ -24,15 +24,6 @@
     <h2 style="padding: 20px; text-align: center; color: white;">LOADING APP...</h2>
   </div>
   <script>
-    // Unregister any cached service workers that might be serving a broken app state
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-
     // Catch script runtime errors
     window.onerror = function (message, source, lineno, colno, error) {
       document.body.innerHTML = '<div style="padding: 20px; color: #991b1b; background: #fee2e2; z-index: 9999; position: absolute; top:0; left:0; right:0;">' + 

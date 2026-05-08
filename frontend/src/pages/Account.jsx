@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useNotifications } from '../context/NotificationContext';
 import {
     TrendingDown,
     Calendar,
@@ -20,7 +21,10 @@ import {
     LogOut,
     Share2,
     Download,
-    Clock
+    Clock,
+    Bell,
+    BellOff,
+    BellRing
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -34,15 +38,26 @@ const Account = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user, logout } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+    const { theme, toggleTheme, accentColor, setAccent } = useTheme();
     const { timeFormat, toggleTimeFormat } = useSettings();
+    const { permission, preferences, requestPermission, updatePreferences } = useNotifications();
     const { hasLock, lockType, configureLock, removeLock, verifyLock } = useSecurity();
-    const [settingLock, setSettingLock] = useState(null); // 'pin', 'pattern', 'verify-remove', 'verify-reset'
+    const [settingLock, setSettingLock] = useState(null);
+    const [enablingNotifications, setEnablingNotifications] = useState(false); // 'pin', 'pattern', 'verify-remove', 'verify-reset'
     const [tempLockObj, setTempLockObj] = useState('');
     const [setupStep, setSetupStep] = useState(1);
     const [setupVal, setSetupVal] = useState('');
     const [setupError, setSetupError] = useState('');
     const navigate = useNavigate();
+
+    const ACCENTS = [
+        { id: 'indigo', color: '#6366f1', name: 'Indigo' },
+        { id: 'rose', color: '#f43f5e', name: 'Rose' },
+        { id: 'emerald', color: '#10b981', name: 'Emerald' },
+        { id: 'amber', color: '#f59e0b', name: 'Amber' },
+        { id: 'sky', color: '#0ea5e9', name: 'Sky' },
+        { id: 'violet', color: '#8b5cf6', name: 'Violet' }
+    ];
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -403,36 +418,207 @@ const Account = () => {
 
             {/* App Preferences */}
             <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '16px' }}>App Preferences</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '16px' }}>App Appearance</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Theme Toggle */}
                     <div className="flex items-center justify-between" style={{ padding: '12px', background: 'var(--glass)', borderRadius: '16px', border: '1px solid var(--border)' }}>
                         <div className="flex items-center gap-3">
                             <div style={{
                                 width: '36px', height: '36px', borderRadius: '10px',
-                                background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                {theme === 'dark' ? <Moon size={18} color="var(--primary)" /> : <Sun size={18} color="var(--primary)" />}
+                            </div>
+                            <div>
+                                <p style={{ fontSize: '0.9rem', fontWeight: '600' }}>Dark Mode</p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currently {theme === 'dark' ? 'enabled' : 'disabled'}</p>
+                            </div>
+                        </div>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={theme === 'dark'}
+                                onChange={toggleTheme}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    {/* Accent Colors */}
+                    <div>
+                        <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accent Color</label>
+                        <div className="flex gap-3 justify-between">
+                            {ACCENTS.map((acc) => (
+                                <button
+                                    key={acc.id}
+                                    onClick={() => setAccent(acc.id)}
+                                    style={{
+                                        width: '42px',
+                                        height: '42px',
+                                        borderRadius: '14px',
+                                        background: acc.color,
+                                        border: accentColor === acc.id ? '3px solid white' : 'none',
+                                        boxShadow: accentColor === acc.id ? `0 0 15px ${acc.color}80` : 'none',
+                                        transform: accentColor === acc.id ? 'scale(1.1)' : 'scale(1)',
+                                        transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {accentColor === acc.id && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-4px',
+                                            right: '-4px',
+                                            width: '16px',
+                                            height: '16px',
+                                            background: 'var(--primary)',
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '2px solid white'
+                                        }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }}></div>
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Time Format */}
+                    <div className="flex items-center justify-between" style={{ padding: '12px', background: 'var(--glass)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <div style={{
+                                width: '36px', height: '36px', borderRadius: '10px',
+                                background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}>
                                 <Clock size={18} color="#3b82f6" />
                             </div>
                             <div>
                                 <p style={{ fontSize: '0.9rem', fontWeight: '600' }}>Time Format</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Current: {timeFormat === '12h' ? '12-Hour (AM/PM)' : '24-Hour'}</p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{timeFormat === '12h' ? '12-Hour (AM/PM)' : '24-Hour'}</p>
                             </div>
                         </div>
                         <button
                             onClick={toggleTimeFormat}
                             style={{
-                                background: 'var(--primary)',
-                                color: 'white',
-                                padding: '6px 12px',
-                                borderRadius: '8px',
+                                background: 'var(--glass)',
+                                color: 'var(--text-primary)',
+                                padding: '8px 16px',
+                                borderRadius: '12px',
                                 fontSize: '0.8rem',
-                                fontWeight: '600'
+                                fontWeight: '700',
+                                border: '1px solid var(--border)'
                             }}
                         >
-                            Toggle {timeFormat === '12h' ? '24h' : '12h'}
+                            Use {timeFormat === '12h' ? '24h' : '12h'}
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Notification Settings */}
+            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-3">
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '12px',
+                            background: 'rgba(99, 102, 241, 0.15)', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <Bell size={20} color="#6366f1" />
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>Notifications</h3>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                {permission === 'granted' ? 'Push notifications active' : 'Stay on top of your spending'}
+                            </p>
+                        </div>
+                    </div>
+                    <span className={`notification-status-badge ${permission === 'granted' ? 'active' : permission === 'denied' ? 'inactive' : 'pending'}`}>
+                        {permission === 'granted' ? '● Active' : permission === 'denied' ? '● Blocked' : '● Off'}
+                    </span>
+                </div>
+
+                {permission === 'default' && (
+                    <div
+                        className="notification-permission-banner"
+                        onClick={async () => {
+                            setEnablingNotifications(true);
+                            await requestPermission();
+                            setEnablingNotifications(false);
+                        }}
+                    >
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <div className="flex items-center gap-3" style={{ marginBottom: '8px' }}>
+                                <BellRing size={24} color="white" />
+                                <h4 style={{ color: 'white', fontSize: '1rem', fontWeight: '700' }}>
+                                    {enablingNotifications ? 'Requesting...' : 'Enable Smart Notifications'}
+                                </h4>
+                            </div>
+                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', lineHeight: '1.5' }}>
+                                Get budget alerts, spending warnings, and daily reminders to keep your finances on track.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {permission === 'denied' && (
+                    <div className="notification-blocked-notice">
+                        <BellOff size={24} color="#ef4444" />
+                        <p>Notifications are blocked. Please enable them in your browser settings to receive budget alerts.</p>
+                    </div>
+                )}
+
+                {permission === 'granted' && (
+                    <div style={{ marginTop: '4px' }}>
+                        <div className="notification-toggle-row">
+                            <div className="notification-toggle-info">
+                                <div className="notification-toggle-label">🚨 Budget Exceeded</div>
+                                <div className="notification-toggle-desc">Alert when spending exceeds your monthly budget</div>
+                            </div>
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.budgetExceeded}
+                                    onChange={(e) => updatePreferences({ budgetExceeded: e.target.checked })}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div className="notification-toggle-row">
+                            <div className="notification-toggle-info">
+                                <div className="notification-toggle-label">⚠️ Budget Warning (80%)</div>
+                                <div className="notification-toggle-desc">Get warned when you've used 80% of your budget</div>
+                            </div>
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.budgetWarning}
+                                    onChange={(e) => updatePreferences({ budgetWarning: e.target.checked })}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div className="notification-toggle-row">
+                            <div className="notification-toggle-info">
+                                <div className="notification-toggle-label">📝 Daily Reminder</div>
+                                <div className="notification-toggle-desc">Evening reminder to log your expenses</div>
+                            </div>
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.dailyReminder}
+                                    onChange={(e) => updatePreferences({ dailyReminder: e.target.checked })}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Quick Actions / Navigation to Stats */}

@@ -3,21 +3,29 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('theme') || 'dark';
-    });
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+    const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accentColor') || 'indigo');
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
 
+    useEffect(() => {
+        document.documentElement.setAttribute('data-accent', accentColor);
+        localStorage.setItem('accentColor', accentColor);
+    }, [accentColor]);
+
     const toggleTheme = () => {
-        setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    };
+
+    const setAccent = (color) => {
+        setAccentColor(color);
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, accentColor, setAccent }}>
             {children}
         </ThemeContext.Provider>
     );

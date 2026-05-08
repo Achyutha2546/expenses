@@ -1,7 +1,9 @@
 const Transaction = require('../models/transactionModel');
 const User = require('../models/userModel');
+const RecurringTransaction = require('../models/recurringTransactionModel');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
+const { checkBudgetAndNotify } = require('./notificationController');
 
 const getTransactions = async (req, res) => {
     try {
@@ -41,7 +43,7 @@ const getTransactions = async (req, res) => {
 };
 
 const addTransaction = async (req, res) => {
-    const { type, amount, category, date, purpose, source, sourceId, toSourceId } = req.body;
+    const { type, amount, category, date, purpose, source, sourceId, toSourceId, isRecurring, frequency } = req.body;
 
     try {
         const user = await User.findOne({ uid: req.user.uid });
@@ -102,7 +104,32 @@ const addTransaction = async (req, res) => {
         } else if (type === 'expense') {
             user.balance -= Number(amount);
         }
+
+        // 3. Track last transaction time for daily reminders
+        user.lastTransactionAt = new Date();
         await user.save();
+
+        // 4. Check budget thresholds and send notifications (non-blocking)
+        if (type === 'expense') {
+            checkBudgetAndNotify(req.user.uid).catch(err =>
+                console.error('Budget notification check failed:', err.message)
+            );
+        }
+
+        // 5. Handle recurring setup if requested
+        if (isRecurring && frequency && type !== 'transfer') {
+            await RecurringTransaction.create({
+                userId: req.user.uid,
+                amount,
+                category,
+                description: purpose,
+                type,
+                source,
+                frequency,
+                startDate: date || new Date(),
+                lastGeneratedDate: date || new Date() // Start counting from now
+            });
+        }
 
         res.status(201).json(transaction);
     } catch (error) {

@@ -22,7 +22,9 @@ const AddEntry = () => {
             date: getLocalTime(),
             purpose: '',
             source: '',
-            category: ''
+            category: '',
+            isRecurring: false,
+            frequency: 'monthly'
         };
         if (editingTransaction) {
             return {
@@ -34,7 +36,9 @@ const AddEntry = () => {
                 date: getLocalTime(new Date(editingTransaction.date)),
                 purpose: editingTransaction.purpose || '',
                 source: editingTransaction.source || '',
-                category: editingTransaction.category || ''
+                category: editingTransaction.category || '',
+                isRecurring: editingTransaction.isRecurring || false,
+                frequency: editingTransaction.frequency || 'monthly'
             };
         }
         return base;
@@ -123,7 +127,11 @@ const AddEntry = () => {
         e.preventDefault();
         setLoading(true);
 
-        const payload = { ...formData };
+        const payload = { 
+            ...formData,
+            isRecurring: formData.isRecurring,
+            frequency: formData.frequency
+        };
         
         // Ensure date is sent as UTC ISO string to prevent timezone shifts
         if (payload.date) {
@@ -140,11 +148,19 @@ const AddEntry = () => {
         }
 
         try {
+            let response;
             if (editingTransaction) {
-                await api.put(`/transactions/${editingTransaction._id}`, payload);
+                response = await api.put(`/transactions/${editingTransaction._id}`, payload);
+            } else {
+                response = await api.post('/transactions', payload);
+            }
+
+            // Check if this was saved offline
+            if (response.offlineSaved) {
+                showToast('Saved offline — will sync automatically ☁️', 'info');
+            } else if (editingTransaction) {
                 showToast('Transaction updated successfully!', 'success');
             } else {
-                await api.post('/transactions', payload);
                 showToast('Transaction added successfully!', 'success');
             }
             
@@ -153,16 +169,29 @@ const AddEntry = () => {
                 navigate('/dashboard');
             }, 1000);
         } catch (err) {
-            if (err.offline) {
-                showToast(err.message, 'error');
-                setTimeout(() => navigate('/history'), 2000);
-            } else {
-                showToast(err.response?.data?.message || 'Error saving transaction', 'error');
-            }
+            showToast(err.response?.data?.message || 'Error saving transaction', 'error');
         } finally {
             setLoading(false);
         }
     };
+
+    const [showNumpad, setShowNumpad] = useState(true);
+
+    const handleNumpadClick = (val) => {
+        if (val === 'back') {
+            setFormData(prev => ({ ...prev, amount: prev.amount.slice(0, -1) }));
+        } else {
+            setFormData(prev => ({ ...prev, amount: prev.amount + val }));
+        }
+    };
+
+    const users = [
+        { name: '@Richie', img: 'https://i.pravatar.cc/100?u=1' },
+        { name: '@Daisio09', img: 'https://i.pravatar.cc/100?u=2' },
+        { name: '@Cassio33', img: 'https://i.pravatar.cc/100?u=3' },
+        { name: '@Jimi', img: 'https://i.pravatar.cc/100?u=4' },
+        { name: '@Leo', img: 'https://i.pravatar.cc/100?u=5' }
+    ];
 
     if (initialLoading) return (
         <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
@@ -171,317 +200,98 @@ const AddEntry = () => {
     );
 
     return (
-        <div className="container animate-in">
-            {/* Toast Notifications */}
-            {toast && (
-                <div className="toast-container">
-                    <div className={`toast ${toast.type}`}>
-                        <div style={{ 
-                            width: '24px', 
-                            height: '24px', 
-                            borderRadius: '50%', 
-                            background: toast.type === 'success' ? 'var(--income)' : (toast.type === 'error' ? 'var(--expense)' : 'var(--primary)'),
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white'
-                        }}>
-                             {toast.type === 'success' ? '✓' : (toast.type === 'error' ? '!' : 'i')}
-                        </div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{toast.message}</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Offline Banner */}
-            {!isOnline && (
-                <div style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid var(--expense)',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }} className="pulse-animation">
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--expense)' }}></div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--expense)' }}>Offline: Entry creation disabled.</span>
-                </div>
-            )}
-            {/* Header */}
-            <header className="flex items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <ArrowLeft size={22} />
-                    </button>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.3px' }}>
-                        {editingTransaction ? 'Edit Transaction' : 'New Transaction'}
-                    </h1>
-                </div>
-                <Link to="/account" style={{
-                    background: 'var(--glass)',
-                    color: 'var(--text-primary)',
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    <Settings size={20} />
-                </Link>
+        <div className="container animate-in" style={{ paddingBottom: '20px' }}>
+            {/* Richie Style Header */}
+            <header className="flex items-center justify-between mb-8 px-2">
+                <button onClick={() => navigate(-1)} style={{ background: 'transparent', color: 'black' }}>
+                    <ArrowLeft size={24} />
+                </button>
+                <h1 style={{ fontSize: '1.1rem', fontWeight: '700' }}>
+                    {formData.type === 'transfer' ? 'Transfer money' : 'Add transaction'}
+                </h1>
+                <button style={{ background: 'transparent', color: 'black' }}>
+                    <Settings size={22} />
+                </button>
             </header>
 
-            <form onSubmit={handleSubmit} className="glass-card" style={{ padding: '24px', borderRadius: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                {/* Type Selector (Integrated) */}
-                <div style={{
-                    background: 'var(--bg-dark)',
-                    padding: '6px',
-                    borderRadius: '16px',
+            {/* User Selection Carousel */}
+            {formData.type === 'transfer' && (
+                <div className="flex gap-4 overflow-x-auto pb-8 mb-4 px-2" style={{ scrollbarWidth: 'none' }}>
+                    {users.map((u, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2" style={{ minWidth: '70px' }}>
+                            <div style={{ 
+                                width: '64px', 
+                                height: '64px', 
+                                borderRadius: '24px', 
+                                overflow: 'hidden',
+                                border: u.name === '@Daisio09' ? '3px solid #ddd6fe' : 'none',
+                                padding: u.name === '@Daisio09' ? '4px' : '0'
+                            }}>
+                                <img src={u.img} style={{ width: '100%', height: '100%', borderRadius: '20px', objectFit: 'cover' }} alt={u.name} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: u.name === '@Daisio09' ? 'black' : '#94a3b8' }}>{u.name}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <h2 style={{ fontSize: '3rem', fontWeight: '800', letterSpacing: '-1.5px' }}>
+                    ₹{formData.amount || '0.00'}
+                </h2>
+            </div>
+
+            {/* Custom Numpad */}
+            <div style={{ 
+                background: '#f1f5f9', 
+                borderRadius: '40px', 
+                padding: '32px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '20px',
+                marginBottom: '20px'
+            }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'back'].map((num, i) => (
+                    <button
+                        key={i}
+                        onClick={() => handleNumpadClick(num)}
+                        style={{ 
+                            height: '60px', 
+                            fontSize: '1.5rem', 
+                            fontWeight: '700', 
+                            background: 'transparent', 
+                            color: 'black' 
+                        }}
+                    >
+                        {num === 'back' ? '⌫' : num}
+                    </button>
+                ))}
+            </div>
+
+            <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{ 
+                    width: '100%', 
+                    height: '64px', 
+                    borderRadius: '24px', 
+                    background: 'black', 
+                    color: 'white', 
+                    fontSize: '1rem', 
+                    fontWeight: '700',
                     display: 'flex',
-                    border: '1px solid var(--border)',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
-                }}>
-                    <button
-                        type="button"
-                        className="flex-1"
-                        style={{
-                            background: formData.type === 'income' ? 'var(--income)' : 'transparent',
-                            color: formData.type === 'income' ? 'white' : 'var(--text-secondary)',
-                            padding: '12px',
-                            fontWeight: '700',
-                            borderRadius: '12px',
-                            fontSize: '0.85rem'
-                        }}
-                        onClick={() => setFormData({ ...formData, type: 'income', purpose: '', toSourceId: '' })}
-                    >
-                        Income
-                    </button>
-                    <button
-                        type="button"
-                        className="flex-1"
-                        style={{
-                            background: formData.type === 'transfer' ? 'var(--primary)' : 'transparent',
-                            color: formData.type === 'transfer' ? 'white' : 'var(--text-secondary)',
-                            padding: '12px',
-                            fontWeight: '700',
-                            borderRadius: '12px',
-                            fontSize: '0.85rem'
-                        }}
-                        onClick={() => setFormData({ ...formData, type: 'transfer', purpose: '', source: '' })}
-                    >
-                        Transfer
-                    </button>
-                    <button
-                        type="button"
-                        className="flex-1"
-                        style={{
-                            background: formData.type === 'expense' ? 'var(--expense)' : 'transparent',
-                            color: formData.type === 'expense' ? 'white' : 'var(--text-secondary)',
-                            padding: '12px',
-                            fontWeight: '700',
-                            borderRadius: '12px',
-                            fontSize: '0.85rem'
-                        }}
-                        onClick={() => setFormData({ ...formData, type: 'expense', source: '', toSourceId: '' })}
-                    >
-                        Expense
-                    </button>
-                </div>
-
-                {/* Hero Amount Input */}
-                <div style={{ textAlign: 'center', position: 'relative' }}>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Amount</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-muted)', marginTop: '8px' }}>₹</span>
-                        <input
-                            name="amount"
-                            type="number"
-                            value={formData.amount}
-                            onChange={handleChange}
-                            required
-                            placeholder="0"
-                            autoFocus
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                fontSize: '4rem',
-                                fontWeight: '900',
-                                textAlign: 'left',
-                                padding: '0',
-                                width: 'auto',
-                                minWidth: '120px',
-                                maxWidth: '100%',
-                                color: 'var(--text-primary)',
-                                boxShadow: 'none',
-                                letterSpacing: '-2px'
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* Input Fields Group */}
-                <div className="flex flex-col gap-6">
-                    {/* Account Source */}
-                    <div style={{ position: 'relative' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {formData.type === 'transfer' ? 'Source Account' : 'Account'}
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
-                                <Landmark size={20} />
-                            </div>
-                            <select
-                                name="sourceId"
-                                value={formData.sourceId}
-                                onChange={handleChange}
-                                required
-                                style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
-                            >
-                                {sources.length === 0 ? (
-                                    <option value="">No sources found.</option>
-                                ) : (
-                                    sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)
-                                )}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Destination Account (Only for Transfer) */}
-                    {formData.type === 'transfer' && (
-                        <div style={{ position: 'relative' }}>
-                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination Account</label>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
-                                    <Landmark size={20} />
-                                </div>
-                                <select
-                                    name="toSourceId"
-                                    value={formData.toSourceId}
-                                    onChange={handleChange}
-                                    required
-                                    style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
-                                >
-                                    {sources.length === 0 ? (
-                                        <option value="">No sources found.</option>
-                                    ) : (
-                                        sources
-                                            .filter(s => s._id !== formData.sourceId)
-                                            .map(s => <option key={s._id} value={s._id}>{s.name}</option>)
-                                    )}
-                                </select>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Purpose / Source Text */}
-                    {formData.type !== 'transfer' && (
-                        <div>
-                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                {formData.type === 'income' ? 'Source Title' : 'What is this for?'}
-                            </label>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
-                                    <FileText size={20} />
-                                </div>
-                                <input
-                                    name={formData.type === 'income' ? 'source' : 'purpose'}
-                                    type="text"
-                                    value={formData.type === 'income' ? formData.source : formData.purpose}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder={formData.type === 'income' ? "Employer, Gift, etc." : "Rent, Coffee, Food..."}
-                                    style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Category Selector */}
-                    {formData.type !== 'transfer' && (
-                        <div>
-                            <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
-                                    <Target size={20} />
-                                </div>
-                                <select
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    required
-                                    style={{ paddingLeft: '48px', appearance: 'none', height: '56px', fontSize: '1rem', fontWeight: '600' }}
-                                >
-                                    <option value="">Select Category</option>
-                                    <option value="Food">Food</option>
-                                    <option value="Transport">Transport</option>
-                                    <option value="Entertainment">Entertainment</option>
-                                    <option value="Shopping">Shopping</option>
-                                    <option value="Utilities">Utilities</option>
-                                    <option value="Investment">Investment</option>
-                                    <option value="Health">Health</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}>
-                                    <ChevronDown size={18} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Date Selector */}
-                    <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '10px', display: 'block', marginLeft: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date & Time</label>
-                        <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.8 }}>
-                                <Calendar size={20} />
-                            </div>
-                            <input
-                                name="date"
-                                type="datetime-local"
-                                value={formData.date}
-                                onChange={handleChange}
-                                required
-                                style={{ paddingLeft: '48px', height: '56px', fontSize: '1rem', fontWeight: '600' }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Submit Action */}
-                <button
-                    type="submit"
-                    disabled={loading || !isOnline}
-                    className="btn-primary"
-                    style={{
-                        padding: '18px',
-                        fontSize: '1.1rem',
-                        fontWeight: '800',
-                        borderRadius: '20px',
-                        marginTop: '10px',
-                        opacity: !isOnline ? 0.6 : 1,
-                        cursor: !isOnline ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)'
-                    }}
-                >
-                    {loading ? 'Processing...' : (!isOnline ? 'Network Unavailable' : (editingTransaction ? 'Update Entry' : 'Add Transaction'))}
-                </button>
-            </form>
-
-            <div style={{ paddingBottom: '40px' }}></div>
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px'
+                }}
+            >
+                {loading ? 'Processing...' : (
+                    <>
+                        {formData.type === 'transfer' ? 'Send money' : 'Save Transaction'}
+                        <TrendingUp size={20} style={{ transform: 'rotate(45deg)' }} />
+                    </>
+                )}
+            </button>
         </div>
     );
 };

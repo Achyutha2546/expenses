@@ -34,6 +34,30 @@ const userSchema = new mongoose.Schema({
     otpExpiry: {
         type: Date,
         default: null
+    },
+    fcmTokens: [{
+        token: { type: String, required: true },
+        device: { type: String, default: 'unknown' },
+        createdAt: { type: Date, default: Date.now }
+    }],
+    notificationPrefs: {
+        budgetWarning: { type: Boolean, default: true },
+        budgetExceeded: { type: Boolean, default: true },
+        dailyReminder: { type: Boolean, default: true },
+        reminderTime: { type: String, default: '20:00' }
+    },
+    lastTransactionAt: {
+        type: Date,
+        default: null
+    },
+    timezone: {
+        type: String,
+        default: 'Asia/Kolkata'
+    },
+    notifiedBudgetThresholds: {
+        type: Map,
+        of: Boolean,
+        default: new Map()
     }
 }, { timestamps: true });
 

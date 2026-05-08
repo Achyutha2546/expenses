@@ -8,12 +8,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'logo-192.png', 'vite.svg'],
+      includeAssets: ['logo.png', 'logo-192.png', 'vite.svg', 'firebase-messaging-sw.js'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Don't let workbox precache the FCM service worker
+        globIgnores: ['**/firebase-messaging-sw.js'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        navigateFallbackDenylist: [/^\/firebase-cloud-messaging-push-scope/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

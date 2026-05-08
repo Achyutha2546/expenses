@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const { startScheduler } = require('./utils/scheduler');
 
 dotenv.config();
 
@@ -22,6 +23,9 @@ app.use('/api/analytics', require('./routes/analyticsRoutes')); // Keep this for
 app.use('/api/budget', require('./routes/budgetRoutes'));
 app.use('/api/set-budget', require('./routes/budgetRoutes')); // Match user request
 app.use('/api/get-budget', require('./routes/budgetRoutes')); // Match user request
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/goals', require('./routes/goalsRoutes'));
+app.use('/api/recurring', require('./routes/recurringRoutes'));
 
 // Serve frontend in production
 const frontendDist = path.join(__dirname, '../frontend/dist');
@@ -45,6 +49,8 @@ mongoose.connect(MONGODB_URI)
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });
+        // Start the notification scheduler for daily reminders
+        startScheduler();
     })
     .catch((err) => {
         console.error('Database connection error:', err);

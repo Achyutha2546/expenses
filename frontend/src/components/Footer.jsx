@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Plus, Wallet, User as UserIcon, BarChart2, PieChart } from 'lucide-react';
+import { LayoutDashboard, BarChart2, List, Settings } from 'lucide-react';
 
 const Footer = () => {
     const location = useLocation();
@@ -11,10 +11,9 @@ const Footer = () => {
 
     const navItems = [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
-        { path: '/analytics', icon: PieChart, label: 'Analytics' },
-        { path: '/add', icon: Plus, label: 'Add', isFab: true },
-        { path: '/sources', icon: Wallet, label: 'Sources' },
-        { path: '/history', icon: History, label: 'History' }
+        { path: '/stats', icon: BarChart2, label: 'Analytics' },
+        { path: '/history', icon: List, label: 'Transactions' },
+        { path: '/account', icon: Settings, label: 'Settings' }
     ];
 
     return (

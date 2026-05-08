@@ -37,6 +37,8 @@ const History = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('history');
+    const [recurringTemplates, setRecurringTemplates] = useState([]);
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -59,12 +61,14 @@ const History = () => {
             if (endDate) params.append('endDate', endDate);
             if (category !== 'all') params.append('category', category);
 
-            const [transRes, sourcesRes] = await Promise.all([
+            const [transRes, sourcesRes, recurringRes] = await Promise.all([
                 api.get(`/transactions?${params.toString()}`),
-                api.get('/sources')
+                api.get('/sources'),
+                api.get('/recurring')
             ]);
             setTransactions(transRes.data);
             setSources(sourcesRes.data);
+            setRecurringTemplates(recurringRes.data);
         } catch (err) {
             console.error('Error fetching history data', err);
         } finally {
@@ -111,6 +115,18 @@ const History = () => {
                 showToast('Entry deleted successfully', 'info');
             } catch (err) {
                 showToast(err.offline ? err.message : 'Failed to delete transaction', 'error');
+            }
+        }
+    };
+
+    const handleDeleteRecurring = async (id) => {
+        if (window.confirm('Stop this recurring transaction? Future entries will not be generated.')) {
+            try {
+                await api.delete(`/recurring/${id}`);
+                setRecurringTemplates(recurringTemplates.filter(t => t._id !== id));
+                showToast('Automation stopped', 'success');
+            } catch (err) {
+                showToast('Failed to stop automation', 'error');
             }
         }
     };
@@ -181,6 +197,36 @@ const History = () => {
                     <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--expense)' }}>Offline Mode: View only.</span>
                 </div>
             )}
+
+            {/* Tab Selector */}
+            <div className="flex gap-4 mb-6 border-b border-gray-100 dark:border-gray-800">
+                <button 
+                    onClick={() => setActiveTab('history')}
+                    style={{ 
+                        padding: '12px 4px', 
+                        fontSize: '0.9rem', 
+                        fontWeight: '700', 
+                        color: activeTab === 'history' ? 'var(--primary)' : 'var(--text-muted)',
+                        borderBottom: activeTab === 'history' ? '2px solid var(--primary)' : 'none',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    History
+                </button>
+                <button 
+                    onClick={() => setActiveTab('recurring')}
+                    style={{ 
+                        padding: '12px 4px', 
+                        fontSize: '0.9rem', 
+                        fontWeight: '700', 
+                        color: activeTab === 'recurring' ? 'var(--primary)' : 'var(--text-muted)',
+                        borderBottom: activeTab === 'recurring' ? '2px solid var(--primary)' : 'none',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    Recurring
+                </button>
+            </div>
 
             {/* Header Area */}
             <header className="flex justify-between items-center mb-6">
@@ -367,132 +413,183 @@ const History = () => {
                 </div>
             </div>
 
-            {/* Transaction List */}
-            <div className="flex flex-col gap-6">
-                {displayTransactions.length === 0 ? (
-                    <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)', marginTop: '20px' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                            <Calendar size={40} color="var(--primary)" opacity={0.4} />
+            {/* Recurring Templates List */}
+            {activeTab === 'recurring' && (
+                <div className="flex flex-col gap-4 animate-in">
+                    {recurringTemplates.length === 0 ? (
+                        <div className="glass-card text-center p-12">
+                            <p className="text-gray-500 font-bold">No active recurring transactions</p>
+                            <p className="text-xs text-gray-400 mt-2">Add a new transaction and check "Repeat" to start automation.</p>
                         </div>
-                        <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No records found</h4>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
-                            We couldn't find any transactions. Try adjusting your search or filters.
-                        </p>
-                        <Link to="/add" style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', textDecoration: 'none', display: 'inline-block' }}>
-                            Add New Entry
-                        </Link>
-                    </div>
-                ) : (
-                    (() => {
-                        const sorted = [...displayTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-                        const groups = [];
-                        let lastDate = "";
+                    ) : (
+                        recurringTemplates.map((template) => (
+                            <div key={template._id} className="glass-card p-5 rounded-2xl flex items-center justify-between border-dashed border-gray-200">
+                                <div className="flex items-center gap-4">
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '12px',
+                                        background: template.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: template.type === 'income' ? 'var(--income)' : 'var(--expense)' }}></div>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm">{template.description || template.category}</h4>
+                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase mt-1">
+                                            <span>₹{template.amount.toLocaleString()}</span>
+                                            <span>•</span>
+                                            <span>{template.frequency}</span>
+                                            <span>•</span>
+                                            <span style={{ color: 'var(--primary)' }}>{template.source}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => handleDeleteRecurring(template._id)}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+            
+            {/* Transaction List (conditional) */}
+            {activeTab === 'history' && (
+                <div className="flex flex-col gap-6">
+                    {displayTransactions.length === 0 ? (
+                        <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)', marginTop: '20px' }}>
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                                <Calendar size={40} color="var(--primary)" opacity={0.4} />
+                            </div>
+                            <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No records found</h4>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
+                                We couldn't find any transactions. Try adjusting your search or filters.
+                            </p>
+                            <Link to="/add" style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', textDecoration: 'none', display: 'inline-block' }}>
+                                Add New Entry
+                            </Link>
+                        </div>
+                    ) : (
+                        (() => {
+                            const sorted = [...displayTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                            const groups = [];
+                            let lastDate = "";
 
-                        sorted.forEach(t => {
-                            const d = new Date(t.date);
-                            const dateStr = d.toLocaleDateString(undefined, { 
-                                weekday: 'short', 
-                                day: 'numeric', 
-                                month: 'short', 
-                                year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
+                            sorted.forEach(t => {
+                                const d = new Date(t.date);
+                                const dateStr = d.toLocaleDateString(undefined, { 
+                                    weekday: 'short', 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
+                                });
+
+                                if (dateStr !== lastDate) {
+                                    lastDate = dateStr;
+                                    groups.push({ date: dateStr, items: [t] });
+                                } else {
+                                    groups[groups.length - 1].items.push(t);
+                                }
                             });
 
-                            if (dateStr !== lastDate) {
-                                lastDate = dateStr;
-                                groups.push({ date: dateStr, items: [t] });
-                            } else {
-                                groups[groups.length - 1].items.push(t);
-                            }
-                        });
+                            return groups.map((group, gIdx) => (
+                                <div key={group.date} className="animate-in" style={{ animationDelay: `${gIdx * 0.05}s` }}>
+                                    <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            {group.date}
+                                        </span>
+                                        <div style={{ flex: 1, height: '1px', background: 'var(--border)', opacity: 0.5 }}></div>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        {group.items.map((t) => {
+                                            const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown';
+                                            const toSourceName = t.type === 'transfer' ? (sources.find(s => s._id.toString() === t.toSourceId?.toString())?.name || 'Unknown') : '';
 
-                        return groups.map((group, gIdx) => (
-                            <div key={group.date} className="animate-in" style={{ animationDelay: `${gIdx * 0.05}s` }}>
-                                <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {group.date}
-                                    </span>
-                                    <div style={{ flex: 1, height: '1px', background: 'var(--border)', opacity: 0.5 }}></div>
+                                            return (
+                                                <div key={t._id} className="glass-card" style={{
+                                                    padding: '16px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    background: 'var(--bg-card)',
+                                                    borderRadius: '16px',
+                                                    border: '1px solid var(--border)',
+                                                    transition: 'transform 0.2s',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => navigate('/add', { state: { transaction: t } })}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div style={{
+                                                            width: '44px',
+                                                            height: '44px',
+                                                            borderRadius: '14px',
+                                                            background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 style={{ fontSize: '0.95rem', fontWeight: '750', color: 'var(--text-primary)' }}>
+                                                                    {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `To ${toSourceName}`}
+                                                                </h4>
+                                                                {t.category && (
+                                                                    <span className="badge" style={{ 
+                                                                        background: `var(--cat-${t.category.toLowerCase()}, var(--cat-other))`,
+                                                                        color: 'white',
+                                                                        opacity: 0.9,
+                                                                        padding: '1px 6px',
+                                                                        borderRadius: '4px',
+                                                                        fontSize: '0.6rem'
+                                                                    }}>
+                                                                        {t.category}
+                                                                    </span>
+                                                                )}
+                                                                {t.isRecurring && (
+                                                                    <span style={{ fontSize: '10px' }}>🔄</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                                                <span>{formatTime(t.date)}</span>
+                                                                <span style={{ opacity: 0.3 }}>•</span>
+                                                                <span>{t.type === 'transfer' ? `From ${sourceName}` : sourceName}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <p className="text-amount" style={{
+                                                            color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
+                                                        }}>
+                                                            {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
+                                                        </p>
+                                                        <div className="flex gap-3 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
+                                                            <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
+                                                                <Edit2 size={14} />
+                                                            </Link>
+                                                            <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    {group.items.map((t) => {
-                                        const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown';
-                                        const toSourceName = t.type === 'transfer' ? (sources.find(s => s._id.toString() === t.toSourceId?.toString())?.name || 'Unknown') : '';
-
-                                        return (
-                                            <div key={t._id} className="glass-card" style={{
-                                                padding: '16px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                background: 'var(--bg-card)',
-                                                borderRadius: '16px',
-                                                border: '1px solid var(--border)',
-                                                transition: 'transform 0.2s',
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => navigate('/add', { state: { transaction: t } })}
-                                            >
-                                                 <div className="flex items-center gap-4">
-                                                     <div style={{
-                                                         width: '44px',
-                                                         height: '44px',
-                                                         borderRadius: '14px',
-                                                         background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-                                                         display: 'flex',
-                                                         alignItems: 'center',
-                                                         justifyContent: 'center'
-                                                     }}>
-                                                         {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
-                                                     </div>
-                                                     <div>
-                                                         <div className="flex items-center gap-2 mb-1">
-                                                             <h4 style={{ fontSize: '0.95rem', fontWeight: '750', color: 'var(--text-primary)' }}>
-                                                                 {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `To ${toSourceName}`}
-                                                             </h4>
-                                                             {t.category && (
-                                                                <span className="badge" style={{ 
-                                                                    background: `var(--cat-${t.category.toLowerCase()}, var(--cat-other))`,
-                                                                    color: 'white',
-                                                                    opacity: 0.9,
-                                                                    padding: '1px 6px',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '0.6rem'
-                                                                }}>
-                                                                    {t.category}
-                                                                </span>
-                                                            )}
-                                                         </div>
-                                                         <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                                                             <span>{formatTime(t.date)}</span>
-                                                             <span style={{ opacity: 0.3 }}>•</span>
-                                                             <span>{t.type === 'transfer' ? `From ${sourceName}` : sourceName}</span>
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                                 <div style={{ textAlign: 'right' }}>
-                                                     <p className="text-amount" style={{
-                                                         color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
-                                                     }}>
-                                                         {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
-                                                     </p>
-                                                     <div className="flex gap-3 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
-                                                         <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
-                                                             <Edit2 size={14} />
-                                                         </Link>
-                                                         <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
-                                                             <Trash2 size={14} />
-                                                         </button>
-                                                     </div>
-                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ));
-                    })()
-                )}
-            </div>
+                            ));
+                        })()
+                    )}
+                </div>
+            )}
 
             <div style={{ paddingBottom: '60px' }}></div>
         </div >

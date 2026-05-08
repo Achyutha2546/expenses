@@ -45,6 +45,15 @@ const transactionSchema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now
+    },
+    isRecurring: {
+        type: Boolean,
+        default: false
+    },
+    frequency: {
+        type: String,
+        enum: ['weekly', 'monthly'],
+        default: null
     }
 }, { timestamps: true });
 

@@ -157,13 +157,18 @@ const Stats = () => {
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="glass-card" style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: '12px' }}>
-                    <p style={{ fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px' }}>{filter === 'monthly' ? `Date: ${label}` : label}</p>
-                    {payload.map((entry, index) => (
-                        <p key={index} style={{ color: entry.color, fontSize: '0.9rem', fontWeight: '600' }}>
-                            {entry.name}: ₹{entry.value.toLocaleString()}
-                        </p>
-                    ))}
+                <div style={{ 
+                    background: 'black', 
+                    color: 'white', 
+                    padding: '8px 12px', 
+                    borderRadius: '12px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+                }}>
+                    <p style={{ opacity: 0.7, marginBottom: '2px' }}>{label} Dec</p>
+                    <p>₹{payload[0].value.toLocaleString()}</p>
                 </div>
             );
         }
@@ -298,62 +303,72 @@ const Stats = () => {
                 </div>
             </div>
 
-            {/* Graphs Section */}
+            {/* Richie Style Chart Section */}
             <div className="mb-8">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px' }}>Income Analysis</h3>
-                <div className="glass-card" style={{ padding: '20px', height: '250px', borderRadius: '24px' }}>
-                    {filter === 'daily' ? (
-                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                            <TrendingUp size={48} color="var(--income)" style={{ opacity: 0.2, marginBottom: '12px' }} />
-                            <p style={{ fontWeight: '700', fontSize: '1.5rem', color: 'var(--income)' }}>₹{totalIncome.toLocaleString()}</p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Daily Income</p>
-                        </div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={graphData}>
-                                <defs>
-                                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--income)" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="var(--income)" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-                                <YAxis hide />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="income" stroke="var(--income)" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    )}
+                <div className="flex justify-between items-center mb-6">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Analytics</h3>
+                    <Calendar size={22} />
+                </div>
+
+                <div className="flex gap-6 mb-6">
+                    <button style={{ fontSize: '1.1rem', fontWeight: '800', color: 'black', borderBottom: '2px solid black', paddingBottom: '4px' }}>Expenses</button>
+                    <button style={{ fontSize: '1.1rem', fontWeight: '800', color: '#94a3b8' }}>Income</button>
+                </div>
+
+                <div style={{ height: '240px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={graphData}>
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                            <Bar 
+                                dataKey="expense" 
+                                radius={[10, 10, 10, 10]} 
+                                barSize={24}
+                            >
+                                {graphData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#f1f5f9' : 'black'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
+            {/* Savings Goals Section */}
             <div className="mb-8">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px' }}>Expense Analysis</h3>
-                <div className="glass-card" style={{ padding: '20px', height: '250px', borderRadius: '24px' }}>
-                    {filter === 'daily' ? (
-                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                            <TrendingDown size={48} color="var(--expense)" style={{ opacity: 0.2, marginBottom: '12px' }} />
-                            <p style={{ fontWeight: '700', fontSize: '1.5rem', color: 'var(--expense)' }}>₹{totalExpense.toLocaleString()}</p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Daily Expenses</p>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '20px' }}>Savings Goals</h3>
+                <div className="flex flex-col gap-4">
+                    {[
+                        { name: 'Emergency', progress: 98, color: '#ddd6fe', icon: '✨' },
+                        { name: 'Home renovation', progress: 78, color: '#fecaca', icon: '🏠' },
+                        { name: 'Travel', progress: 62, color: '#bae6fd', icon: '☁️' }
+                    ].map((goal, i) => (
+                        <div key={i} style={{ 
+                            background: goal.color, 
+                            borderRadius: '28px', 
+                            padding: '20px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between' 
+                        }}>
+                            <div className="flex items-center gap-4">
+                                <div style={{ 
+                                    width: '48px', 
+                                    height: '48px', 
+                                    borderRadius: '16px', 
+                                    background: 'rgba(255, 255, 255, 0.4)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontSize: '1.2rem'
+                                }}>
+                                    {goal.icon}
+                                </div>
+                                <h4 style={{ fontWeight: '700', color: 'black' }}>{goal.name}</h4>
+                            </div>
+                            <span style={{ fontWeight: '800', color: 'black', opacity: 0.6 }}>{goal.progress}%</span>
                         </div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={graphData}>
-                                <defs>
-                                    <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--expense)" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="var(--expense)" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-                                <YAxis hide />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="expense" stroke="var(--expense)" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    )}
+                    ))}
                 </div>
             </div>
 
