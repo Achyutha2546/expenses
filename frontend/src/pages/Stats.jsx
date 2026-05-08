@@ -311,8 +311,32 @@ const Stats = () => {
                 </div>
 
                 <div className="flex gap-6 mb-6">
-                    <button style={{ fontSize: '1.1rem', fontWeight: '800', color: 'black', borderBottom: '2px solid black', paddingBottom: '4px' }}>Expenses</button>
-                    <button style={{ fontSize: '1.1rem', fontWeight: '800', color: '#94a3b8' }}>Income</button>
+                    <button 
+                        onClick={() => setDisplayType('expense')}
+                        style={{ 
+                            fontSize: '1.1rem', 
+                            fontWeight: '800', 
+                            color: displayType === 'expense' || displayType === 'all' ? 'black' : '#94a3b8', 
+                            borderBottom: displayType === 'expense' || displayType === 'all' ? '2px solid black' : 'none', 
+                            paddingBottom: '4px',
+                            background: 'transparent'
+                        }}
+                    >
+                        Expenses
+                    </button>
+                    <button 
+                        onClick={() => setDisplayType('income')}
+                        style={{ 
+                            fontSize: '1.1rem', 
+                            fontWeight: '800', 
+                            color: displayType === 'income' ? 'black' : '#94a3b8', 
+                            borderBottom: displayType === 'income' ? '2px solid black' : 'none', 
+                            paddingBottom: '4px',
+                            background: 'transparent'
+                        }}
+                    >
+                        Income
+                    </button>
                 </div>
 
                 <div style={{ height: '240px' }}>
@@ -321,7 +345,7 @@ const Stats = () => {
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                             <Bar 
-                                dataKey="expense" 
+                                dataKey={displayType === 'income' ? 'income' : 'expense'} 
                                 radius={[10, 10, 10, 10]} 
                                 barSize={24}
                             >
@@ -336,7 +360,12 @@ const Stats = () => {
 
             {/* Savings Goals Section */}
             <div className="mb-8">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '20px' }}>Savings Goals</h3>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Savings Goals</h3>
+                    <button onClick={() => navigate('/goals')} style={{ background: 'black', color: 'white', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Plus size={18} />
+                    </button>
+                </div>
                 <div className="flex flex-col gap-4">
                     {[
                         { name: 'Emergency', progress: 98, color: '#ddd6fe', icon: '✨' },
