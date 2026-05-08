@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../utils/api';
-import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown, Settings, Target } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown, Settings, Target, TrendingUp, TrendingDown } from 'lucide-react';
 
 const AddEntry = () => {
     const navigate = useNavigate();
@@ -214,7 +214,37 @@ const AddEntry = () => {
                 </button>
             </header>
 
-            {/* User Selection Carousel */}
+            {/* Richie Style Type Selector */}
+            <div style={{
+                background: '#f1f5f9',
+                padding: '6px',
+                borderRadius: '20px',
+                display: 'flex',
+                gap: '4px',
+                marginBottom: '32px'
+            }}>
+                {['expense', 'income', 'transfer'].map(type => (
+                    <button
+                        key={type}
+                        onClick={() => setFormData(prev => ({ ...prev, type }))}
+                        style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: '16px',
+                            fontSize: '0.85rem',
+                            fontWeight: '700',
+                            textTransform: 'capitalize',
+                            background: formData.type === type ? 'white' : 'transparent',
+                            color: formData.type === type ? 'black' : '#94a3b8',
+                            boxShadow: formData.type === type ? '0 4px 12px rgba(0,0,0,0.05)' : 'none'
+                        }}
+                    >
+                        {type}
+                    </button>
+                ))}
+            </div>
+
+            {/* User Selection Carousel (Only for Transfer) */}
             {formData.type === 'transfer' && (
                 <div className="flex gap-4 overflow-x-auto pb-8 mb-4 px-2" style={{ scrollbarWidth: 'none' }}>
                     {users.map((u, i) => (
@@ -232,6 +262,43 @@ const AddEntry = () => {
                             <span style={{ fontSize: '0.7rem', fontWeight: '700', color: u.name === '@Daisio09' ? 'black' : '#94a3b8' }}>{u.name}</span>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Essential Fields for Non-Transfer */}
+            {formData.type !== 'transfer' && (
+                <div className="flex flex-col gap-4 mb-8">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <select
+                            name="sourceId"
+                            value={formData.sourceId}
+                            onChange={handleChange}
+                            style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
+                        >
+                            {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                        </select>
+                        <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
+                        >
+                            <option value="">Category</option>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Health">Health</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <input
+                        name={formData.type === 'income' ? 'source' : 'purpose'}
+                        value={formData.type === 'income' ? formData.source : formData.purpose}
+                        onChange={handleChange}
+                        placeholder={formData.type === 'income' ? 'Source (e.g. Salary)' : 'Purpose (e.g. Dinner)'}
+                        style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
+                    />
                 </div>
             )}
 
