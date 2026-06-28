@@ -1,1 +1,49 @@
-/* All CSS removed */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden;
+    background-color: #070a13;
+  }
+}
+
+/* Custom premium scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-700;
+}
+
+/* Glassmorphism style utility class */
+.glass-effect {
+  @apply bg-slate-900/60 backdrop-blur-md border border-slate-800/80;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-brand-400 to-indigo-400 bg-clip-text text-transparent;
+}
+
+/* Responsive layout spacing for page containers when sidebar is active */
+.container {
+  @apply w-full max-w-7xl mx-auto px-4 pb-24 md:pb-8 pt-4 transition-all duration-300;
+}
+
+@media (min-width: 768px) {
+  html.has-sidebar .container {
+    padding-left: 17rem; /* expanded sidebar width 16rem (w-64) + 1rem padding */
+  }
+  html.has-sidebar.sidebar-collapsed .container {
+    padding-left: 6rem; /* collapsed sidebar width 5rem (w-20) + 1rem padding */
+  }
+}
+

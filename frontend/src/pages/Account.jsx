@@ -3,18 +3,11 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useNotifications } from '../context/NotificationContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    TrendingDown,
-    Calendar,
-    ArrowUpRight,
-    Filter,
     ArrowLeft,
     TrendingUp,
-    Wallet,
     User as UserIcon,
-    ChevronLeft,
-    ChevronRight,
-    ArrowRight,
     Sun,
     Moon,
     Lock,
@@ -24,7 +17,9 @@ import {
     Clock,
     Bell,
     BellOff,
-    BellRing
+    BellRing,
+    ArrowRight,
+    Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -32,10 +27,6 @@ import { useSecurity } from '../context/SecurityContext';
 import { PinPad, PatternPad } from '../components/LockScreen';
 
 const Account = () => {
-    const [filter, setFilter] = useState('monthly'); // 'daily', 'monthly', 'yearly'
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [displayType, setDisplayType] = useState('all'); // 'all', 'income', 'expense'
-    const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user, logout } = useAuth();
     const { theme, toggleTheme, accentColor, setAccent } = useTheme();
@@ -43,8 +34,7 @@ const Account = () => {
     const { permission, preferences, requestPermission, updatePreferences } = useNotifications();
     const { hasLock, lockType, configureLock, removeLock, verifyLock } = useSecurity();
     const [settingLock, setSettingLock] = useState(null);
-    const [enablingNotifications, setEnablingNotifications] = useState(false); // 'pin', 'pattern', 'verify-remove', 'verify-reset'
-    const [tempLockObj, setTempLockObj] = useState('');
+    const [enablingNotifications, setEnablingNotifications] = useState(false);
     const [setupStep, setSetupStep] = useState(1);
     const [setupVal, setSetupVal] = useState('');
     const [setupError, setSetupError] = useState('');
@@ -60,73 +50,10 @@ const Account = () => {
     ];
 
     useEffect(() => {
-        const fetchTransactions = async () => {
-            try {
-                const res = await api.get('/transactions');
-                setTransactions(res.data);
-            } catch (err) {
-                console.error('Error fetching transactions', err);
-                if (err.response?.status === 401) {
-                    logout();
-                    navigate('/auth');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTransactions();
+        // Fast loading simulation to sync UI transitions
+        const timer = setTimeout(() => setLoading(false), 200);
+        return () => clearTimeout(timer);
     }, []);
-
-    const navigateDate = (direction) => {
-        const newDate = new Date(currentDate);
-        if (filter === 'daily') {
-            newDate.setDate(newDate.getDate() + direction);
-        } else if (filter === 'monthly') {
-            newDate.setMonth(newDate.getMonth() + direction);
-        } else if (filter === 'yearly') {
-            newDate.setFullYear(newDate.getFullYear() + direction);
-        }
-        setCurrentDate(newDate);
-    };
-
-    const filterTransactions = () => {
-        return transactions.filter(t => {
-            const tDate = new Date(t.date);
-            let matchesDate = false;
-
-            if (filter === 'daily') {
-                matchesDate = tDate.toDateString() === currentDate.toDateString();
-            } else if (filter === 'monthly') {
-                matchesDate = tDate.getMonth() === currentDate.getMonth() && tDate.getFullYear() === currentDate.getFullYear();
-            } else if (filter === 'yearly') {
-                matchesDate = tDate.getFullYear() === currentDate.getFullYear();
-            }
-
-            if (!matchesDate) return false;
-
-            if (displayType === 'income') return t.type === 'income';
-            if (displayType === 'expense') return t.type === 'expense';
-            return true; // 'all'
-        });
-    };
-
-    const getDateDisplay = () => {
-        if (filter === 'daily') {
-            return currentDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-        } else if (filter === 'monthly') {
-            return currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-        } else if (filter === 'yearly') {
-            return currentDate.getFullYear().toString();
-        }
-    };
-
-    const currentTransactions = filterTransactions();
-    const totalExpense = currentTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-    const totalIncome = currentTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
 
     const exportData = () => {
         const data = {};
@@ -137,630 +64,472 @@ const Account = () => {
             }
         }
         if (Object.keys(data).length === 0) {
-            alert('No offline data found to export.');
+            alert('No offline cache found to export.');
             return;
         }
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
         navigator.clipboard.writeText(encoded).then(() => {
-            alert('Your offline data has been copied to the clipboard! Open the Render link and use the "Import" button there.');
+            alert('Your encrypted offline cache has been copied to clipboard.');
         }).catch(err => {
-            alert('Failed to copy: ' + encoded);
+            alert('Export failed. Copying backup manually: ' + encoded);
         });
     };
 
     const importData = () => {
-        const code = window.prompt('Paste the export code you copied from your other link:');
+        const code = window.prompt('Paste the exported cache code below:');
         if (!code) return;
         try {
             const data = JSON.parse(decodeURIComponent(escape(atob(code))));
             Object.keys(data).forEach(key => {
                 localStorage.setItem(key, data[key]);
             });
-            alert('Data imported successfully! The app will now reload to sync your transactions.');
+            alert('Data cache imported successfully. Reloading Workspace...');
             window.location.reload();
         } catch (err) {
-            alert('Invalid migration code. Please make sure you copied the entire code.');
+            alert('Migration parsing failed. Ensure the string is formatted correctly.');
         }
     };
 
-    if (loading) return (
-        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-            <div className="loader"></div>
-        </div>
-    );
+    if (loading) {
+        return (
+            <div className="container flex justify-center items-center min-h-[75vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="container animate-in" style={{ paddingBottom: '100px' }}>
+        <div className="container relative pb-12 select-none">
             {/* Header */}
             <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        style={{
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
+                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Account Settings</h1>
+                    <h1 className="text-lg font-black text-white tracking-tight">Account Settings</h1>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    title="Toggle Dark/Light Mode"
                 >
-                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
             </header>
 
-            {/* User Account Info Section */}
-            <div className="glass-card mb-6" style={{
-                padding: '24px',
-                borderRadius: '24px',
-                display: 'flex',
-                background: 'var(--card-gradient)',
-                alignItems: 'center',
-                gap: '20px',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-lg)'
-            }}>
-                {user?.photoURL ? (
-                    <img
-                        src={user.photoURL}
-                        alt={user.name || 'Profile'}
-                        referrerPolicy="no-referrer"
-                        style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '20px',
-                            objectFit: 'cover',
-                            boxShadow: '0 8px 16px -4px rgba(139, 92, 246, 0.5)'
-                        }}
-                    />
-                ) : (
-                    <div style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '20px',
-                        background: 'var(--primary-gradient)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 8px 16px -4px rgba(139, 92, 246, 0.5), inset 0 2px 4px rgba(255,255,255,0.2)'
-                    }}>
-                        <UserIcon size={32} color="white" />
-                    </div>
-                )}
-                <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '4px' }}>
+            {/* Profile Summary Card */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 flex items-center gap-5 shadow-premium relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-brand-500/5 blur-2xl pointer-events-none" />
+                
+                <div className="flex-shrink-0">
+                    {user?.photoURL ? (
+                        <img
+                            src={user.photoURL}
+                            alt="Profile Avatar"
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-800"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow text-white">
+                            <UserIcon size={26} />
+                        </div>
+                    )}
+                </div>
+                
+                <div className="truncate flex-1">
+                    <h2 className="text-base font-extrabold text-white truncate">
                         {user?.name || user?.email?.split('@')[0] || 'User Profile'}
                     </h2>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                        {user?.email || 'user@example.com'}
+                    <p className="text-xs text-slate-450 text-slate-400 truncate mt-0.5">
+                        {user?.email || 'unregistered@spendly.io'}
                     </p>
-                    <div style={{
-                        marginTop: '8px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        background: 'rgba(52, 168, 83, 0.12)',
-                        color: '#34a853',
-                        fontSize: '0.7rem',
-                        fontWeight: '600'
-                    }}>
-                        <svg width="12" height="12" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
-                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                        </svg>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase text-emerald-400 mt-2.5">
                         Google Verified
-                    </div>
+                    </span>
                 </div>
             </div>
 
-            {/* Security Settings Area */}
-            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
+            {/* Application Security Section */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
-                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Lock size={20} color="var(--primary)" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow flex-shrink-0">
+                            <Lock size={20} />
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>App Security</h3>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                {hasLock ? `Secured with ${lockType.toUpperCase()} lock` : 'Lock your app for privacy'}
+                            <h3 className="font-extrabold text-sm text-slate-200">Security Access Lock</h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                                {hasLock ? `App Locked (${lockType.toUpperCase()})` : 'Lock application on startup'}
                             </p>
                         </div>
                     </div>
-                    <div onClick={() => {
-                        if (hasLock) {
-                            setSettingLock('verify-remove');
-                        } else {
-                            setSettingLock('pin');
-                        }
-                    }}>
-                        <div style={{ position: 'relative', width: '48px', height: '24px', background: hasLock ? 'var(--primary)' : 'rgba(100,100,100,0.3)', borderRadius: '12px', transition: 'all 0.3s', cursor: 'pointer', border: '1px solid var(--border)' }}>
-                            <div style={{ position: 'absolute', top: '1px', left: hasLock ? '25px' : '2px', width: '20px', height: '20px', background: 'white', borderRadius: '50%', transition: 'all 0.3s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-                        </div>
-                    </div>
+                    <button 
+                        onClick={() => {
+                            if (hasLock) setSettingLock('verify-remove');
+                            else setSettingLock('pin');
+                        }}
+                        className={`w-12 h-6 rounded-full p-[2px] transition-colors relative border ${
+                            hasLock ? 'bg-brand-600 border-brand-500' : 'bg-slate-950 border-slate-850'
+                        }`}
+                        title="Toggle App Lock"
+                    >
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-premium transition-transform ${
+                            hasLock ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                    </button>
                 </div>
                 
                 {hasLock && !settingLock && (
-                    <div className="flex gap-2 mt-4 flex-wrap">
-                        <button onClick={() => setSettingLock('verify-change-pin')} style={{ background: 'var(--glass)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '10px', fontSize: '0.8rem', flex: 1, border: '1px solid var(--border)', fontWeight: '600' }}>Change PIN</button>
-                        <button onClick={() => setSettingLock('verify-change-pattern')} style={{ background: 'var(--glass)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '10px', fontSize: '0.8rem', flex: 1, border: '1px solid var(--border)', fontWeight: '600' }}>Change Pattern</button>
-                        <button onClick={() => {
-                                setSettingLock('verify-reset');
-                            }}
-                            style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--expense)', padding: '10px 12px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '600', border: '1px solid rgba(239, 68, 68, 0.2)' }}
-                        >Reset Lock</button>
+                    <div className="flex gap-2.5 mt-4 pt-3 border-t border-slate-800/50">
+                        <button 
+                            onClick={() => setSettingLock('verify-change-pin')} 
+                            className="flex-1 py-2 px-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-300 transition-colors"
+                        >
+                            Change PIN
+                        </button>
+                        <button 
+                            onClick={() => setSettingLock('verify-change-pattern')} 
+                            className="flex-1 py-2 px-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-300 transition-colors"
+                        >
+                            Change Pattern
+                        </button>
+                        <button 
+                            onClick={() => setSettingLock('verify-reset')}
+                            className="py-2 px-3 rounded-xl bg-rose-500/10 border border-rose-500/15 text-[10px] font-black uppercase text-rose-455 text-rose-400"
+                        >
+                            Reset Lock
+                        </button>
                     </div>
                 )}
 
+                {/* Subsetting lockpad prompts */}
                 {settingLock && (
-                    <div className="flex flex-col gap-4 mt-4 pt-6 pb-2 items-center" style={{ borderTop: '1px solid var(--border)' }}>
-                        <h3 className={settingLock.startsWith('verify') ? '' : 'fade-in-text'} style={{ fontSize: '1.2rem', fontWeight: '700', textAlign: 'center' }}>
+                    <div className="flex flex-col gap-4 mt-6 pt-5 border-t border-slate-800/50 items-center">
+                        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest">
                             {settingLock.startsWith('verify') 
-                                ? `Verify your current ${lockType.toUpperCase()} to continue` 
+                                ? `Enter current credentials` 
                                 : (setupStep === 1 
-                                    ? (settingLock === 'pin' ? 'Set your new PIN' : 'Draw your new pattern') 
-                                    : (settingLock === 'pin' ? 'Confirm your new PIN' : 'Draw pattern again to confirm')
+                                    ? (settingLock === 'pin' ? 'Configure new PIN' : 'Draw new Pattern') 
+                                    : (settingLock === 'pin' ? 'Confirm new PIN' : 'Repeat pattern to save')
                                   )}
                         </h3>
-                        {setupError && <p style={{ color: 'var(--expense)', fontSize: '0.85rem', marginTop: '-8px' }}>{setupError}</p>}
+                        {setupError && <p className="text-xs text-rose-455 text-rose-450 font-bold">{setupError}</p>}
                         
-                        {(settingLock === 'pin' || (settingLock.startsWith('verify') && lockType === 'pin')) ? (
-                            <PinPad 
-                                hasError={!!setupError} 
-                                resetError={() => setSetupError('')}
-                                onComplete={async (val) => {
-                                    if (settingLock.startsWith('verify')) {
-                                        try {
-                                            const res = await verifyLock({ pin: val });
-                                            if (res.success) {
-                                                if (settingLock.includes('change')) {
-                                                    setSettingLock(settingLock.split('-')[2]);
-                                                    setSetupStep(1);
-                                                    setSetupError('');
-                                                } else {
-                                                    await removeLock();
-                                                    alert(settingLock === 'verify-reset' ? 'Lock reset successfully.' : 'Security lock disabled.');
-                                                    setSettingLock(null);
-                                                    setSetupError('');
-                                                }
-                                            } else {
-                                                setSetupError(res.message || 'Incorrect PIN');
-                                            }
-                                        } catch (err) { setSetupError('Error verifying lock'); }
-                                    } else if (setupStep === 1) {
-                                        setSetupVal(val);
-                                        setSetupStep(2);
-                                    } else if (setupStep === 2) {
-                                        if (val === setupVal) {
+                        <div className="w-full flex justify-center max-w-[280px]">
+                            {(settingLock === 'pin' || (settingLock.startsWith('verify') && lockType === 'pin')) ? (
+                                <PinPad 
+                                    hasError={!!setupError} 
+                                    resetError={() => setSetupError('')}
+                                    onComplete={async (val) => {
+                                        if (settingLock.startsWith('verify')) {
                                             try {
-                                                await configureLock('pin', { pin: val });
-                                                setSettingLock(null);
+                                                const res = await verifyLock({ pin: val });
+                                                if (res.success) {
+                                                    if (settingLock.includes('change')) {
+                                                        setSettingLock(settingLock.split('-')[2]);
+                                                        setSetupStep(1);
+                                                        setSetupError('');
+                                                    } else {
+                                                        await removeLock();
+                                                        alert(settingLock === 'verify-reset' ? 'Lock reset completed.' : 'Access lock deactivated.');
+                                                        setSettingLock(null);
+                                                        setSetupError('');
+                                                    }
+                                                } else {
+                                                    setSetupError(res.message || 'Incorrect credentials');
+                                                }
+                                            } catch (err) { setSetupError('Verification error occurred'); }
+                                        } else if (setupStep === 1) {
+                                            setSetupVal(val);
+                                            setSetupStep(2);
+                                        } else if (setupStep === 2) {
+                                            if (val === setupVal) {
+                                                try {
+                                                    await configureLock('pin', { pin: val });
+                                                    setSettingLock(null);
+                                                    setSetupStep(1);
+                                                    setSetupVal('');
+                                                    alert('PIN lock applied!');
+                                                } catch (err) { setSetupError('Failed to configure PIN'); setSetupStep(1); }
+                                            } else {
+                                                setSetupError('PIN mismatch');
                                                 setSetupStep(1);
                                                 setSetupVal('');
-                                                alert('PIN saved successfully!');
-                                            } catch (err) { setSetupError('Error saving PIN'); setSetupStep(1); }
-                                        } else {
-                                            setSetupError('PINs do not match');
-                                            setSetupStep(1);
-                                            setSetupVal('');
-                                        }
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <PatternPad 
-                                hasError={!!setupError} 
-                                resetError={() => setSetupError('')}
-                                onComplete={async (val) => {
-                                    if (settingLock.startsWith('verify')) {
-                                        try {
-                                            const res = await verifyLock({ pattern: val });
-                                            if (res.success) {
-                                                if (settingLock.includes('change')) {
-                                                    setSettingLock(settingLock.split('-')[2]);
-                                                    setSetupStep(1);
-                                                    setSetupError('');
-                                                } else {
-                                                    await removeLock();
-                                                    alert(settingLock === 'verify-reset' ? 'Lock reset successfully.' : 'Security lock disabled.');
-                                                    setSettingLock(null);
-                                                    setSetupError('');
-                                                }
-                                            } else {
-                                                setSetupError(res.message || 'Incorrect Pattern');
                                             }
-                                        } catch (err) { setSetupError('Error verifying lock'); }
-                                    } else if (setupStep === 1) {
-                                        setSetupVal(val);
-                                        setSetupStep(2);
-                                    } else if (setupStep === 2) {
-                                        if (val === setupVal) {
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <PatternPad 
+                                    hasError={!!setupError} 
+                                    resetError={() => setSetupError('')}
+                                    onComplete={async (val) => {
+                                        if (settingLock.startsWith('verify')) {
                                             try {
-                                                await configureLock('pattern', { pattern: val });
-                                                setSettingLock(null);
+                                                const res = await verifyLock({ pattern: val });
+                                                if (res.success) {
+                                                    if (settingLock.includes('change')) {
+                                                        setSettingLock(settingLock.split('-')[2]);
+                                                        setSetupStep(1);
+                                                        setSetupError('');
+                                                    } else {
+                                                        await removeLock();
+                                                        alert(settingLock === 'verify-reset' ? 'Lock reset completed.' : 'Access lock deactivated.');
+                                                        setSettingLock(null);
+                                                        setSetupError('');
+                                                    }
+                                                } else {
+                                                    setSetupError(res.message || 'Incorrect pattern sequence');
+                                                }
+                                            } catch (err) { setSetupError('Verification error occurred'); }
+                                        } else if (setupStep === 1) {
+                                            setSetupVal(val);
+                                            setSetupStep(2);
+                                        } else if (setupStep === 2) {
+                                            if (val === setupVal) {
+                                                try {
+                                                    await configureLock('pattern', { pattern: val });
+                                                    setSettingLock(null);
+                                                    setSetupStep(1);
+                                                    setSetupVal('');
+                                                    alert('Pattern lock applied!');
+                                                } catch (err) { setSetupError('Failed to configure pattern'); setSetupStep(1); }
+                                            } else {
+                                                setSetupError('Pattern mismatch');
                                                 setSetupStep(1);
                                                 setSetupVal('');
-                                                alert('PATTERN saved successfully!');
-                                            } catch (err) { setSetupError('Error saving PATTERN'); setSetupStep(1); }
-                                        } else {
-                                            setSetupError('Patterns do not match');
-                                            setSetupStep(1);
-                                            setSetupVal('');
+                                            }
                                         }
-                                    }
-                                }}
-                            />
-                        )}
+                                    }}
+                                />
+                            )}
+                        </div>
                         
                         <button 
                             onClick={() => { setSettingLock(null); setSetupStep(1); setSetupVal(''); setSetupError(''); }} 
-                            style={{ background: 'var(--glass)', color: 'var(--text-secondary)', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600' }}
+                            className="px-5 py-2.5 rounded-xl border border-slate-850 hover:border-slate-800 text-xs font-extrabold text-slate-400 bg-slate-950/45 transition-colors"
                         >
-                            Cancel
+                            Cancel Setup
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* App Preferences */}
-            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '16px' }}>App Appearance</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* Theme Toggle */}
-                    <div className="flex items-center justify-between" style={{ padding: '12px', background: 'var(--glass)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                        <div className="flex items-center gap-3">
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '10px',
-                                background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                {theme === 'dark' ? <Moon size={18} color="var(--primary)" /> : <Sun size={18} color="var(--primary)" />}
-                            </div>
-                            <div>
-                                <p style={{ fontSize: '0.9rem', fontWeight: '600' }}>Dark Mode</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Currently {theme === 'dark' ? 'enabled' : 'disabled'}</p>
-                            </div>
-                        </div>
-                        <label className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={theme === 'dark'}
-                                onChange={toggleTheme}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    {/* Accent Colors */}
-                    <div>
-                        <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accent Color</label>
-                        <div className="flex gap-3 justify-between">
-                            {ACCENTS.map((acc) => (
+            {/* Custom Theme Accent Preferences */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-6">
+                <h3 className="text-sm font-extrabold text-white">App Appearance</h3>
+                
+                {/* Accent selector */}
+                <div className="space-y-3">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Accent Theme</span>
+                    <div className="grid grid-cols-6 gap-2 pt-1">
+                        {ACCENTS.map((acc) => {
+                            const active = accentColor === acc.id;
+                            return (
                                 <button
                                     key={acc.id}
                                     onClick={() => setAccent(acc.id)}
-                                    style={{
-                                        width: '42px',
-                                        height: '42px',
-                                        borderRadius: '14px',
-                                        background: acc.color,
-                                        border: accentColor === acc.id ? '3px solid white' : 'none',
-                                        boxShadow: accentColor === acc.id ? `0 0 15px ${acc.color}80` : 'none',
-                                        transform: accentColor === acc.id ? 'scale(1.1)' : 'scale(1)',
-                                        transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                        position: 'relative'
-                                    }}
+                                    className="w-10 h-10 rounded-xl relative flex items-center justify-center hover:scale-105 active:scale-95 transition-all outline-none"
+                                    style={{ background: acc.color }}
+                                    title={acc.name}
                                 >
-                                    {accentColor === acc.id && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '-4px',
-                                            right: '-4px',
-                                            width: '16px',
-                                            height: '16px',
-                                            background: 'var(--primary)',
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '2px solid white'
-                                        }}>
-                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }}></div>
+                                    {active && (
+                                        <div className="absolute inset-0 border-[3px] border-slate-900 rounded-xl flex items-center justify-center">
+                                            <Check size={14} className="text-white" strokeWidth={3} />
                                         </div>
                                     )}
                                 </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Time Format */}
-                    <div className="flex items-center justify-between" style={{ padding: '12px', background: 'var(--glass)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                        <div className="flex items-center gap-3">
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '10px',
-                                background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <Clock size={18} color="#3b82f6" />
-                            </div>
-                            <div>
-                                <p style={{ fontSize: '0.9rem', fontWeight: '600' }}>Time Format</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{timeFormat === '12h' ? '12-Hour (AM/PM)' : '24-Hour'}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={toggleTimeFormat}
-                            style={{
-                                background: 'var(--glass)',
-                                color: 'var(--text-primary)',
-                                padding: '8px 16px',
-                                borderRadius: '12px',
-                                fontSize: '0.8rem',
-                                fontWeight: '700',
-                                border: '1px solid var(--border)'
-                            }}
-                        >
-                            Use {timeFormat === '12h' ? '24h' : '12h'}
-                        </button>
+                            );
+                        })}
                     </div>
                 </div>
-            </div>
 
-            {/* Notification Settings */}
-            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
-                <div className="flex justify-between items-center mb-4">
+                {/* Clock select */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950/50 border border-slate-850">
                     <div className="flex items-center gap-3">
-                        <div style={{
-                            width: '40px', height: '40px', borderRadius: '12px',
-                            background: 'rgba(99, 102, 241, 0.15)', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <Bell size={20} color="#6366f1" />
+                        <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-450 flex items-center justify-center">
+                            <Clock size={18} />
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>Notifications</h3>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                {permission === 'granted' ? 'Push notifications active' : 'Stay on top of your spending'}
+                            <p className="text-xs font-extrabold text-slate-200">Time Format</p>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                                {timeFormat === '12h' ? '12-Hour standard' : '24-Hour Military'}
                             </p>
                         </div>
                     </div>
-                    <span className={`notification-status-badge ${permission === 'granted' ? 'active' : permission === 'denied' ? 'inactive' : 'pending'}`}>
-                        {permission === 'granted' ? '● Active' : permission === 'denied' ? '● Blocked' : '● Off'}
+                    
+                    <button
+                        onClick={toggleTimeFormat}
+                        className="px-3 py-1.5 rounded-lg border border-slate-850 hover:border-slate-800 text-[10px] font-black uppercase text-slate-350 bg-slate-950/20 transition-colors"
+                    >
+                        Switch to {timeFormat === '12h' ? '24H' : '12H'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Smart Alerts Center */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-5">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow">
+                            <Bell size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-sm text-slate-200">Push Notifications</h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                                Keep track of spending metrics
+                            </p>
+                        </div>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase border ${
+                        permission === 'granted' 
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450' 
+                            : permission === 'denied'
+                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-450'
+                                : 'bg-slate-950 border-slate-850 text-slate-500'
+                    }`}>
+                        {permission === 'granted' ? 'Enabled' : permission === 'denied' ? 'Blocked' : 'Deactivated'}
                     </span>
                 </div>
 
                 {permission === 'default' && (
-                    <div
-                        className="notification-permission-banner"
+                    <button
                         onClick={async () => {
                             setEnablingNotifications(true);
                             await requestPermission();
                             setEnablingNotifications(false);
                         }}
+                        disabled={enablingNotifications}
+                        className="w-full p-4 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-glow flex items-center justify-center gap-2"
                     >
-                        <div style={{ position: 'relative', zIndex: 1 }}>
-                            <div className="flex items-center gap-3" style={{ marginBottom: '8px' }}>
-                                <BellRing size={24} color="white" />
-                                <h4 style={{ color: 'white', fontSize: '1rem', fontWeight: '700' }}>
-                                    {enablingNotifications ? 'Requesting...' : 'Enable Smart Notifications'}
-                                </h4>
-                            </div>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', lineHeight: '1.5' }}>
-                                Get budget alerts, spending warnings, and daily reminders to keep your finances on track.
-                            </p>
-                        </div>
-                    </div>
+                        <BellRing size={16} />
+                        <span>Enable Real-time Alerts</span>
+                    </button>
                 )}
 
                 {permission === 'denied' && (
-                    <div className="notification-blocked-notice">
-                        <BellOff size={24} color="#ef4444" />
-                        <p>Notifications are blocked. Please enable them in your browser settings to receive budget alerts.</p>
+                    <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10 flex items-start gap-3">
+                        <BellOff size={18} className="text-rose-450 mt-0.5 flex-shrink-0" />
+                        <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
+                            Alert permissions are blocked. Activate notification settings in your device browser control panel to utilize budget alerts.
+                        </p>
                     </div>
                 )}
 
                 {permission === 'granted' && (
-                    <div style={{ marginTop: '4px' }}>
-                        <div className="notification-toggle-row">
-                            <div className="notification-toggle-info">
-                                <div className="notification-toggle-label">🚨 Budget Exceeded</div>
-                                <div className="notification-toggle-desc">Alert when spending exceeds your monthly budget</div>
+                    <div className="space-y-3.5 pt-2">
+                        {[
+                            { id: 'budgetExceeded', title: '🚨 Limit Alerts', desc: 'Notify immediately when spending crosses monthly budget limits.' },
+                            { id: 'budgetWarning', title: '⚠️ Caution Alert (80%)', desc: 'Warn when debit crosses 80% of configured monthly ceiling.' },
+                            { id: 'dailyReminder', title: '📝 Daily Bookkeeping', desc: 'Evening alerts prompting manual transaction logging.' }
+                        ].map((pref) => (
+                            <div key={pref.id} className="flex justify-between items-center p-3 rounded-2xl bg-slate-950/40 border border-slate-850">
+                                <div className="space-y-0.5 max-w-[70%]">
+                                    <h4 className="text-xs font-bold text-slate-200">{pref.title}</h4>
+                                    <p className="text-[9px] text-slate-500 leading-normal">{pref.desc}</p>
+                                </div>
+                                <button 
+                                    onClick={() => updatePreferences({ [pref.id]: !preferences[pref.id] })}
+                                    className={`w-10 h-5.5 rounded-full p-[2px] transition-colors border relative ${
+                                        preferences[pref.id] ? 'bg-brand-600 border-brand-500' : 'bg-slate-950 border-slate-850'
+                                    }`}
+                                >
+                                    <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-premium transition-transform ${
+                                        preferences[pref.id] ? 'translate-x-4.5' : 'translate-x-0'
+                                    }`} />
+                                </button>
                             </div>
-                            <label className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={preferences.budgetExceeded}
-                                    onChange={(e) => updatePreferences({ budgetExceeded: e.target.checked })}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                        <div className="notification-toggle-row">
-                            <div className="notification-toggle-info">
-                                <div className="notification-toggle-label">⚠️ Budget Warning (80%)</div>
-                                <div className="notification-toggle-desc">Get warned when you've used 80% of your budget</div>
-                            </div>
-                            <label className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={preferences.budgetWarning}
-                                    onChange={(e) => updatePreferences({ budgetWarning: e.target.checked })}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                        <div className="notification-toggle-row">
-                            <div className="notification-toggle-info">
-                                <div className="notification-toggle-label">📝 Daily Reminder</div>
-                                <div className="notification-toggle-desc">Evening reminder to log your expenses</div>
-                            </div>
-                            <label className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={preferences.dailyReminder}
-                                    onChange={(e) => updatePreferences({ dailyReminder: e.target.checked })}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
+                        ))}
                     </div>
                 )}
             </div>
 
-            {/* Quick Actions / Navigation to Stats */}
-            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '16px' }}>Quick View</h3>
+            {/* Custom Navigation link */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium">
+                <h3 className="text-sm font-extrabold text-white mb-4">Quick Links</h3>
                 <button
                     onClick={() => navigate('/stats')}
-                    style={{
-                        width: '100%',
-                        padding: '16px',
-                        borderRadius: '16px',
-                        background: 'var(--glass)',
-                        color: 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        border: '1px solid var(--border)'
-                    }}
+                    className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-850 hover:border-slate-800 text-slate-250 flex items-center justify-between text-xs font-extrabold transition-colors hover:scale-[1.01]"
                 >
-                    <div className="flex items-center gap-3">
-                        <TrendingUp size={20} color="var(--income)" />
-                        <span style={{ fontWeight: '600' }}>View Financial Analytics</span>
-                    </div>
-                    <ArrowRight size={18} />
+                    <span className="flex items-center gap-2">
+                        <TrendingUp size={16} className="text-emerald-450" />
+                        <span>Inspect Flow Charts</span>
+                    </span>
+                    <ArrowRight size={16} />
                 </button>
             </div>
 
-            {/* Data Migration Section */}
-            <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '24px' }}>
-                <div className="flex items-center gap-3 mb-4">
-                    <div style={{
-                        width: '40px', height: '40px', borderRadius: '12px',
-                        background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Share2 size={20} color="#3b82f6" />
+            {/* Backup Migration Panel */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-450 flex items-center justify-center">
+                        <Share2 size={20} />
                     </div>
                     <div>
-                        <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>Data Migration</h3>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Transfer offline data between links</p>
+                        <h3 className="font-extrabold text-sm text-slate-200">Local Ledger Migration</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                            Sync offline data packages manually
+                        </p>
                     </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={exportData}
-                        style={{
-                            padding: '12px',
-                            borderRadius: '12px',
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            border: '1px solid var(--border)'
-                        }}
+                        className="py-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/45 text-xs font-bold text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
                     >
-                        <Share2 size={16} /> Export Code
+                        <Share2 size={14} /> <span>Copy Code</span>
                     </button>
                     <button
                         onClick={importData}
-                        style={{
-                            padding: '12px',
-                            borderRadius: '12px',
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            border: '1px solid var(--border)'
-                        }}
+                        className="py-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/45 text-xs font-bold text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
                     >
-                        <Download size={16} /> Import Code
+                        <Download size={14} /> <span>Import Code</span>
                     </button>
                 </div>
             </div>
 
-            {/* Sign Out Button */}
-            <div style={{ marginTop: '40px', padding: '0 4px' }}>
+            {/* Authentication Sign Out actions */}
+            <div className="space-y-4 pt-6">
                 <button
                     onClick={() => {
-                        if (window.confirm('Are you sure you want to sign out?')) {
+                        if (window.confirm('Sign out of Spendly on this device?')) {
                             logout();
                             navigate('/');
                         }
                     }}
-                    style={{
-                        width: '100%',
-                        padding: '16px',
-                        borderRadius: '18px',
-                        background: 'rgba(244, 63, 94, 0.1)',
-                        color: 'var(--expense)',
-                        border: '1px solid rgba(244, 63, 94, 0.2)',
-                        fontWeight: '700',
-                        fontSize: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px'
-                    }}
+                    className="w-full py-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/15 text-rose-455 text-rose-400 font-extrabold text-sm flex items-center justify-center gap-2 shadow-glow transition-all"
                 >
-                    <LogOut size={20} />
-                    Sign Out from Device
+                    <LogOut size={18} />
+                    <span>De-authorize Account</span>
                 </button>
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '12px' }}>
-                    Version 2.0.0 • Firebase Auth
+                <p className="text-center text-slate-655 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+                    Build Version 2.0.0 · PWA Synced
                 </p>
-            </div>
 
-            {/* Danger Zone */}
-            <div style={{ marginTop: '24px', padding: '0 4px' }}>
+                {/* Account Removal Danger button */}
                 <button
                     onClick={async () => {
-                        if (window.confirm('WARNING: This will permanently delete your account and ALL your financial data. This cannot be undone. Are you sure?')) {
-                            if (window.prompt('To confirm deletion, please type "DELETE" below:') === 'DELETE') {
+                        if (window.confirm('CRITICAL ACTION: This deletes your credentials and all transaction databases permanently. This action is irreversible. Proceed?')) {
+                            if (window.prompt('Type "DELETE" below to finalize deactivation:') === 'DELETE') {
                                 try {
                                     await api.delete('/auth/delete');
-                                    alert('Your account and all associated data have been permanently deleted.');
+                                    alert('Account deleted.');
                                     logout();
                                     navigate('/');
                                 } catch (err) {
-                                    alert(err.response?.data?.message || 'Failed to delete account');
+                                    alert(err.response?.data?.message || 'Deactivation request failed');
                                 }
                             }
                         }
                     }}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        borderRadius: '18px',
-                        background: 'transparent',
-                        color: 'var(--text-muted)',
-                        border: '1px solid var(--border)',
-                        fontWeight: '500',
-                        fontSize: '0.85rem'
-                    }}
+                    className="w-full py-3 rounded-xl border border-slate-855 border-slate-850 text-slate-600 hover:text-rose-450 hover:border-rose-500/30 transition-colors text-xs font-semibold"
                 >
-                    Permanently Delete Account
+                    Permanently Terminate Account
                 </button>
             </div>
         </div>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
-import { Wallet, Plus, Trash2, CheckCircle, Rocket, Landmark, ArrowRight } from 'lucide-react';
+import { Wallet, Plus, Trash2, Landmark, ArrowRight, Rocket } from 'lucide-react';
 
 const Onboarding = () => {
     const [sources, setSources] = useState([{ name: 'Cash', balance: '' }]);
@@ -51,124 +52,124 @@ const Onboarding = () => {
     };
 
     return (
-        <div className="container animate-in" style={{
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            padding: '24px'
-        }}>
+        <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col justify-center items-center p-6 relative overflow-hidden">
+            {/* Background glowing rings */}
+            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-brand-600/10 blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-15%] w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[150px] pointer-events-none" />
+
             {/* Onboarding Intro */}
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <div style={{
-                    width: '64px',
-                    height: '64px',
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    borderRadius: '50%',
-                    margin: '0 auto 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    <Rocket size={32} color="var(--primary)" />
+            <div className="text-center mb-8 relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center mx-auto mb-4 border border-brand-500/20 shadow-glow">
+                    <Rocket size={32} />
                 </div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.5px', marginBottom: '8px' }}>
+                <h1 className="text-2xl font-black tracking-tight text-white mb-2">
                     Setup your wallet
                 </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '300px', margin: '0 auto' }}>
-                    Tell us about your current accounts and balances to get started.
+                <p className="text-sm text-slate-400 max-w-xs mx-auto leading-relaxed">
+                    Tell us about your current accounts and balances to initialize your Spendly ledger.
                 </p>
             </div>
 
-            <div className="glass-card" style={{
-                width: '100%',
-                maxWidth: '500px',
-                margin: '0 auto',
-                padding: '32px',
-                borderRadius: '32px',
-                background: 'rgba(21, 26, 45, 0.6)',
-                backdropFilter: 'blur(30px)'
-            }}>
-                <form onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-6">
-                        {sources.map((source, index) => (
-                            <div key={index} className="flex flex-col gap-1 p-4" style={{
-                                background: 'rgba(255, 255, 255, 0.03)',
-                                borderRadius: '20px',
-                                border: '1px solid var(--border)',
-                                position: 'relative'
-                            }}>
-                                <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--primary)' }}>
-                                    <Landmark size={14} />
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Account {index + 1}
-                                    </span>
-                                </div>
-                                <div className="flex gap-3">
-                                    <div style={{ flex: 1 }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Bank, Cash, etc."
-                                            value={source.name}
-                                            onChange={(e) => handleChange(index, 'name', e.target.value)}
-                                            required
-                                            style={{ background: 'transparent', border: 'none', borderBottom: '2px solid var(--border)', borderRadius: 0, padding: '12px 0' }}
-                                        />
+            {/* Form Card Container */}
+            <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="w-full max-w-xl p-8 rounded-3xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl shadow-premium relative overflow-hidden"
+            >
+                {/* Top edge glow */}
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 to-indigo-500" />
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+                        <AnimatePresence initial={false}>
+                            {sources.map((source, index) => (
+                                <motion.div 
+                                    key={index}
+                                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="p-5 rounded-2xl bg-slate-950/40 border border-slate-800/60 relative group"
+                                >
+                                    <div className="flex items-center gap-2 mb-3 text-brand-400 font-bold text-xs uppercase tracking-wider">
+                                        <Landmark size={14} />
+                                        <span>Account {index + 1}</span>
                                     </div>
-                                    <div style={{ width: '120px' }}>
-                                        <input
-                                            type="number"
-                                            placeholder="Balance ₹"
-                                            value={source.balance}
-                                            onChange={(e) => handleChange(index, 'balance', e.target.value)}
-                                            style={{ background: 'transparent', border: 'none', borderBottom: '2px solid var(--border)', borderRadius: 0, padding: '12px 0', fontWeight: '700' }}
-                                        />
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-4 items-center">
+                                        <div className="flex-1 w-full">
+                                            <input
+                                                type="text"
+                                                placeholder="Bank name, Cash, etc."
+                                                value={source.name}
+                                                onChange={(e) => handleChange(index, 'name', e.target.value)}
+                                                required
+                                                className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-800 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-600 text-sm font-semibold transition-colors duration-250"
+                                            />
+                                        </div>
+                                        
+                                        <div className="w-full sm:w-36 flex items-center gap-3">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Balance ₹"
+                                                    value={source.balance}
+                                                    onChange={(e) => handleChange(index, 'balance', e.target.value)}
+                                                    required
+                                                    className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-800 focus:border-brand-500 outline-none text-slate-250 text-slate-200 placeholder-slate-600 text-sm font-bold transition-colors duration-250"
+                                                />
+                                            </div>
+                                            
+                                            {sources.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveRow(index)}
+                                                    className="p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                                    title="Remove Account"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    {sources.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveRow(index)}
-                                            style={{ background: 'transparent', color: 'var(--expense)', padding: '0 8px' }}
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </div>
 
                     <button
                         type="button"
                         onClick={handleAddRow}
-                        className="mt-6 flex items-center justify-center gap-2 w-full"
-                        style={{
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            fontWeight: '600',
-                            padding: '14px',
-                            borderRadius: '14px',
-                            fontSize: '0.9rem'
-                        }}
+                        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 text-slate-300 font-semibold text-sm transition-all duration-200 hover:scale-[1.01]"
                     >
                         <Plus size={18} /> Add Another Account
                     </button>
 
-                    {error && <p style={{ color: 'var(--expense)', marginTop: '20px', textAlign: 'center', fontSize: '0.85rem', fontWeight: '500' }}>{error}</p>}
+                    <AnimatePresence>
+                        {error && (
+                            <motion.p 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-rose-450 text-rose-450 text-xs font-semibold text-center mt-2"
+                            >
+                                {error}
+                            </motion.p>
+                        )}
+                    </AnimatePresence>
 
                     <button
                         type="submit"
-                        className="btn-primary mt-8 w-full flex items-center justify-center gap-3"
                         disabled={loading}
-                        style={{ padding: '18px', borderRadius: '18px', fontSize: '1.1rem', fontWeight: '800' }}
+                        className="w-full py-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-glow hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all duration-200"
                     >
-                        {loading ? 'Finalizing...' : <>Complete Setup <ArrowRight size={20} /></>}
+                        {loading ? 'Finalizing Setup...' : <>Complete Setup <ArrowRight size={20} /></>}
                     </button>
                 </form>
-            </div>
+            </motion.div>
 
-            <p style={{ textAlign: 'center', marginTop: '32px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                Step 2 of 2: Managing your wealth
+            <p className="text-center mt-8 text-slate-500 text-xs font-medium tracking-wide">
+                Step 2 of 2: Capital Ledger Initialization
             </p>
         </div>
     );

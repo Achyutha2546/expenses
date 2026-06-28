@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api, { getPendingCount, getCached } from '../utils/api';
 import SyncIndicator from '../components/SyncIndicator';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
     TrendingUp,
@@ -11,24 +12,20 @@ import {
     LogOut,
     X,
     ChevronRight,
-    Bell,
     Settings,
-    User,
-    History,
     Sun,
     Moon,
     Download,
-    Eye,
-    EyeOff,
     Target,
     Edit2,
     Zap,
     ThumbsUp,
-    AlertCircle
+    AlertCircle,
+    Bell,
+    RefreshCw
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { useSecurity } from '../context/SecurityContext';
 
 const Dashboard = () => {
     // Instant hydration from cache — no network wait
@@ -44,7 +41,6 @@ const Dashboard = () => {
     const [goals, setGoals] = useState(() => getCached('/goals') || []);
 
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [showBreakdown, setShowBreakdown] = useState(false);
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [peekData, setPeekData] = useState(null);
@@ -81,15 +77,12 @@ const Dashboard = () => {
         } finally {
             setLoading(false);
             if (isBackground) {
-                // Brief delay so the refresh shimmer is perceptible
                 setTimeout(() => setIsRefreshing(false), 300);
             }
         }
     };
 
     useEffect(() => {
-        // If we have cached data, fetch in background (user sees cached instantly)
-        // If no cache, fetch normally (user sees skeleton)
         fetchData(hasCachedData);
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
@@ -98,7 +91,6 @@ const Dashboard = () => {
             setDeferredPrompt(e);
             setShowInstallBtn(true);
         };
-        // Auto-refresh when offline data finishes syncing
         const handleSyncComplete = () => {
             console.log('[Dashboard] Sync complete — refreshing data');
             fetchData(true);
@@ -167,7 +159,6 @@ const Dashboard = () => {
             acc.expense += curr.amount;
             if (isCurrentMonth) acc.monthlyExpense += curr.amount;
         }
-        // Source tracking (simplified for brevity)
         const sourceKey = curr.sourceId?.toString();
         if (sourceKey) {
             if (!acc.sources[sourceKey]) acc.sources[sourceKey] = 0;
@@ -183,193 +174,171 @@ const Dashboard = () => {
 
     const budgetStatus = budget.amount > 0 ? (budget.totalSpent / budget.amount) * 100 : 0;
     const isOverBudget = budget.isOverBudget;
-
     const balance = budget.userBalance !== undefined ? budget.userBalance : (totals.income - totals.expense);
 
-    if (loading) return (
-        <div className="container animate-in">
-            {/* Skeleton Header */}
-            <header className="flex justify-between items-center mb-6" style={{ padding: '0 4px' }}>
-                <div className="flex items-center gap-3">
-                    <div className="skeleton" style={{ width: '44px', height: '44px', borderRadius: '14px' }} />
-                    <div>
-                        <div className="skeleton" style={{ width: '60px', height: '10px', borderRadius: '4px', marginBottom: '6px' }} />
-                        <div className="skeleton" style={{ width: '120px', height: '16px', borderRadius: '6px' }} />
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '12px' }} />
-                    <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '12px' }} />
-                </div>
-            </header>
-
-            {/* Skeleton Balance Card */}
-            <div className="mb-10">
-                <div className="skeleton" style={{ height: '160px', borderRadius: '28px', marginBottom: '16px' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div className="skeleton" style={{ height: '100px', borderRadius: '24px' }} />
-                    <div className="skeleton" style={{ height: '100px', borderRadius: '24px' }} />
-                </div>
-            </div>
-
-            {/* Skeleton Budget Card */}
-            <div className="skeleton" style={{ height: '140px', borderRadius: '24px', marginBottom: '32px' }} />
-
-            {/* Skeleton Insights */}
-            <div className="skeleton" style={{ height: '90px', borderRadius: '24px', marginBottom: '32px' }} />
-
-            {/* Skeleton Shortcuts */}
-            <div style={{ marginBottom: '40px' }}>
-                <div className="skeleton" style={{ width: '100px', height: '16px', borderRadius: '6px', marginBottom: '16px' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                    <div className="skeleton" style={{ aspectRatio: '1/1', borderRadius: '20px' }} />
-                    <div className="skeleton" style={{ aspectRatio: '1/1', borderRadius: '20px' }} />
-                    <div className="skeleton" style={{ aspectRatio: '1/1', borderRadius: '20px' }} />
-                </div>
-            </div>
-
-            {/* Skeleton Transactions */}
-            <div>
-                <div className="skeleton" style={{ width: '140px', height: '16px', borderRadius: '6px', marginBottom: '16px' }} />
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                        <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                            <div className="skeleton" style={{ width: '60%', height: '14px', borderRadius: '4px', marginBottom: '6px' }} />
-                            <div className="skeleton" style={{ width: '40%', height: '10px', borderRadius: '4px' }} />
+    if (loading) {
+        return (
+            <div className="container select-none">
+                {/* Header Skeleton */}
+                <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-slate-800 animate-pulse" />
+                        <div className="space-y-2">
+                            <div className="w-16 h-3.5 bg-slate-800 rounded animate-pulse" />
+                            <div className="w-28 h-5 bg-slate-800 rounded-lg animate-pulse" />
                         </div>
-                        <div className="skeleton" style={{ width: '60px', height: '16px', borderRadius: '6px' }} />
                     </div>
-                ))}
+                    <div className="w-10 h-10 rounded-xl bg-slate-800 animate-pulse" />
+                </div>
+
+                {/* Balance Card Skeleton */}
+                <div className="w-full h-44 rounded-3xl bg-slate-900 border border-slate-800/80 mb-8 animate-pulse" />
+
+                {/* Grid Skeletons */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="h-28 rounded-2xl bg-slate-900 border border-slate-800/60 animate-pulse" />
+                    <div className="h-28 rounded-2xl bg-slate-900 border border-slate-800/60 animate-pulse" />
+                </div>
+
+                {/* Budget card skeleton */}
+                <div className="w-full h-36 rounded-2xl bg-slate-900 border border-slate-800/60 mb-8 animate-pulse" />
             </div>
-        </div>
-    );
+        );
+    }
 
     return (
-        <div className={`container animate-in${isRefreshing ? ' dashboard-refreshing' : ''}`}>
+        <div className="container relative min-h-screen">
             {/* Sync Indicator */}
             <SyncIndicator />
 
-            {/* Offline Banner */}
+            {/* Offline Notification Banner */}
             {!isOnline && (
-                <div className="offline-banner">
-                    <div className="offline-banner-dot"></div>
-                    <span className="offline-banner-text">Offline — using cached data{getPendingCount() > 0 ? ` · ${getPendingCount()} pending` : ''}</span>
+                <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center gap-2 text-xs font-semibold text-rose-400">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                    <span>Offline Mode — Cached data active {getPendingCount() > 0 ? `(${getPendingCount()} updates pending sync)` : ''}</span>
                 </div>
             )}
 
-            {/* Richie Jimenez Style Header */}
-            <header className="page-header">
+            {/* Header Greeting Section */}
+            <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
-                    <div className="dashboard-avatar">
-                        <img src={user?.photoURL || 'https://i.pravatar.cc/100'} alt="profile" />
+                    <div className="w-12 h-12 rounded-2xl bg-slate-800 ring-2 ring-slate-700/50 overflow-hidden shadow-premium">
+                        <img src={user?.photoURL || 'https://i.pravatar.cc/100'} alt="profile" className="object-cover w-full h-full" />
                     </div>
                     <div>
-                        <p className="text-meta">Welcome,</p>
-                        <h1 className="text-primary font-bold text-lg">{user?.name || user?.email?.split('@')[0] || 'User Profile'}</h1>
+                        <p className="text-xs text-slate-500 font-medium">{getGreeting()},</p>
+                        <h1 className="text-lg font-bold text-white leading-tight">
+                            {user?.name || user?.email?.split('@')[0] || 'Member'}
+                        </h1>
                     </div>
                 </div>
-                <button onClick={() => fetchData(true)} className="btn-icon">
-                    <History size={20} />
-                </button>
-            </header>
-            <div className="flex gap-2 mb-6">
-                {showInstallBtn && (
-                    <button
-                        onClick={handleInstallClick}
-                        className="btn-icon btn-icon-lg btn-primary"
+                
+                <div className="flex items-center gap-2">
+                    {showInstallBtn && (
+                        <button 
+                            onClick={handleInstallClick} 
+                            className="w-10 h-10 rounded-xl bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center shadow-glow transition-all active:scale-95"
+                            title="Install Application"
+                        >
+                            <Download size={18} />
+                        </button>
+                    )}
+                    <button 
+                        onClick={() => fetchData(true)} 
+                        disabled={isRefreshing}
+                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
+                        title="Force Synchronize Data"
                     >
-                        <Download size={20} />
+                        <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
                     </button>
-                )}
-                <button
-                    onClick={toggleTheme}
-                    className="btn-icon btn-icon-lg"
-                >
-                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                <button
-                    onClick={() => {
-                        if (window.confirm('Sign out of your account?')) {
-                            logout();
-                            navigate('/');
-                        }
-                    }}
-                    className="btn-icon btn-icon-lg btn-danger"
-                >
-                    <LogOut size={20} />
-                </button>
-                <Link to="/account" className="btn-icon btn-icon-lg">
-                    <Settings size={20} />
-                </Link>
-            </div>
+                </div>
+            </header>
 
-            {/* Personalized Engagement Card */}
-            <div className="mb-8 animate-in stagger-1">
-                <div className="insight-card-banner">
-                    <div className="insight-card-emoji">
+            {/* Smart Engagement Banner */}
+            <div className="mb-6">
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md flex items-center gap-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-brand-500/5 blur-xl pointer-events-none" />
+                    <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg flex-shrink-0">
                         {budgetStatus < 50 ? '✨' : (budgetStatus < 100 ? '🛡️' : '⚠️')}
                     </div>
                     <div>
-                        <p className="font-semibold text-base text-primary leading-snug">{getPersonalMessage()}</p>
-                        <p className="text-xs text-muted mt-1">Based on your {new Date().toLocaleDateString(undefined, { month: 'long' })} activity</p>
+                        <p className="text-sm font-semibold text-slate-200 leading-snug">{getPersonalMessage()}</p>
+                        <p className="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-wide">
+                            Active budget status checklist
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Pill Style Balance Card */}
-            <div className="balance-card-wrap">
-                <div className="balance-card">
-                    {/* Background Overlapping Orbs */}
-                    <div className="balance-card-orb balance-card-orb-1"></div>
-                    <div className="balance-card-orb balance-card-orb-2"></div>
-                    <div className="balance-card-orb balance-card-orb-3"></div>
+            {/* Premium Credit Card Balance Module */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Visual Credit Card */}
+                <div className="lg:col-span-2 relative rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 p-6 md:p-8 text-left overflow-hidden shadow-premium group">
+                    {/* Decorative glowing backdrops */}
+                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute left-1/3 bottom-[-40px] w-36 h-36 bg-black/15 rounded-full blur-xl" />
 
-                    <div className="balance-card-content">
-                        <div className="flex justify-between items-start mb-1">
-                            <p className="balance-label">Balance</p>
-                            <div className="balance-card-badge">VISA</div>
+                    <div className="relative z-10 flex flex-col justify-between h-full min-h-[140px]">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <span className="text-[11px] font-bold text-brand-200 uppercase tracking-widest">Active Balance</span>
+                                <h2 className="text-3xl md:text-4xl font-extrabold mt-1 text-white tracking-tight">
+                                    ₹{balance.toLocaleString('en-IN')}
+                                </h2>
+                            </div>
+                            <span className="px-3 py-1 rounded-lg bg-white/10 text-white font-black text-xs tracking-wider backdrop-blur-sm border border-white/10">
+                                VISA
+                            </span>
                         </div>
-                        <h2 className="balance-amount">
-                            ₹{balance.toLocaleString()}
-                        </h2>
-                    </div>
-                    
-                    <div className="balance-card-footer">
-                        <p className="balance-card-dots">•••• 5512</p>
+                        
+                        <div className="flex justify-between items-end mt-8">
+                            <span className="text-sm font-semibold text-brand-200 tracking-wider">•••• 5512</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-300">Premium Account</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Richie Jimenez Style Action Row */}
-                <div className="balance-action-row">
-                    <button className="balance-action-btn">
-                        <Download size={22} />
-                    </button>
-                    <button onClick={() => navigate('/add')} className="balance-action-btn">
-                        <TrendingUp size={22} style={{ transform: 'rotate(45deg)' }} />
-                    </button>
-                    <button onClick={() => navigate('/add')} className="balance-action-btn">
-                        <Plus size={22} />
-                    </button>
-                    <button className="balance-action-primary">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '3px' }}>
-                            {[1,2,3,4,5,6,7,8,9].map(i => <div key={i} style={{ width: '4px', height: '4px', background: 'white', borderRadius: '1px' }}></div>)}
-                        </div>
-                    </button>
+                {/* Instant Actions Column */}
+                <div className="flex flex-col justify-between gap-4 p-5 rounded-3xl bg-slate-900 border border-slate-800/80 shadow-premium">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Actions</span>
+                    
+                    <div className="grid grid-cols-3 gap-3 my-2">
+                        <button 
+                            onClick={() => navigate('/add', { state: { defaultType: 'expense' } })}
+                            className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/15 text-rose-450 hover:bg-rose-500/15 flex flex-col items-center gap-1.5 transition-all hover:scale-105 active:scale-95 font-semibold text-xs"
+                        >
+                            <TrendingDown size={20} />
+                            <span>Expense</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/add', { state: { defaultType: 'income' } })}
+                            className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-450 hover:bg-emerald-500/15 flex flex-col items-center gap-1.5 transition-all hover:scale-105 active:scale-95 font-semibold text-xs"
+                        >
+                            <TrendingUp size={20} />
+                            <span>Income</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/add', { state: { defaultType: 'transfer' } })}
+                            className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/15 text-blue-450 hover:bg-blue-500/15 flex flex-col items-center gap-1.5 transition-all hover:scale-105 active:scale-95 font-semibold text-xs"
+                        >
+                            <Plus size={20} />
+                            <span>Transfer</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* Monthly Budget Card */}
-            <div className="budget-card mb-8">
-                <div className="budget-header">
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-8 shadow-premium relative overflow-hidden">
+                <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="budget-icon-wrap">
+                        <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow">
                             <Target size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-base">Monthly Budget</h3>
-                            <p className="text-xs text-muted mt-1">
-                                {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                            <h3 className="font-extrabold text-sm text-slate-200">Monthly Budget</h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                             </p>
                         </div>
                     </div>
@@ -378,71 +347,77 @@ const Dashboard = () => {
                             setNewBudgetVal(budget.amount || '');
                             setShowBudgetModal(true);
                         }}
-                        className="btn btn-sm btn-secondary"
+                        className="px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/40 hover:bg-slate-900/40 text-slate-300 transition-colors flex items-center gap-1.5"
                     >
                         <Edit2 size={12} /> Edit
                     </button>
                 </div>
 
-                <div className="mb-4">
-                    <div className="flex justify-between mb-2">
-                        <span className="text-sm text-secondary">Spent: ₹{(budget.totalSpent || 0).toLocaleString()}</span>
-                        <span className={`text-sm font-bold ${budget.amount > 0 ? 'text-primary' : 'text-muted'}`}>
-                            {budget.amount > 0 ? `₹${budget.amount.toLocaleString()}` : 'Set Budget'}
+                <div className="space-y-3">
+                    <div className="flex justify-between items-end text-xs font-bold">
+                        <span className="text-slate-400">Spent: <span className="text-slate-200 font-black">₹{(budget.totalSpent || 0).toLocaleString()}</span></span>
+                        <span className={budget.amount > 0 ? "text-brand-400 font-black text-sm" : "text-slate-650"}>
+                            {budget.amount > 0 ? `Limit: ₹${budget.amount.toLocaleString()}` : 'Set Spending Limit'}
                         </span>
                     </div>
-                    <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${Math.min(budgetStatus, 100)}%` }}></div>
-                    </div>
-                </div>
 
-                <div className="flex justify-between items-center">
-                    <p className="text-xs text-muted">
-                        {budget.amount > 0 ? (
-                            isOverBudget 
-                                ? `Exceeded by ₹${(budget.totalSpent - budget.amount).toLocaleString()}` 
-                                : `₹${(budget.amount - (budget.totalSpent || 0)).toLocaleString()} remaining`
-                        ) : 'Keep your spending in check'}
-                    </p>
-                    {budgetStatus >= 100 && (
-                        <div className="alert alert-danger">Budget Exceeded</div>
-                    )}
-                    {budgetStatus >= 80 && budgetStatus < 100 && (
-                        <div className="alert alert-warning">Approaching Limit ({budgetStatus.toFixed(0)}%)</div>
-                    )}
+                    {/* Progress Fill */}
+                    <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-850/80 p-[2px]">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                                isOverBudget 
+                                    ? 'bg-gradient-to-r from-rose-500 to-red-600' 
+                                    : budgetStatus >= 85 
+                                        ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                                        : 'bg-gradient-to-r from-brand-500 to-indigo-500'
+                            }`}
+                            style={{ width: `${Math.min(budgetStatus, 100)}%` }}
+                        />
+                    </div>
+
+                    <div className="flex justify-between items-center pt-1.5">
+                        <p className="text-xs text-slate-500 font-medium">
+                            {budget.amount > 0 ? (
+                                isOverBudget 
+                                    ? `Exceeded by ₹${(budget.totalSpent - budget.amount).toLocaleString()}` 
+                                    : `₹${(budget.amount - (budget.totalSpent || 0)).toLocaleString()} remaining`
+                            ) : 'Set a limit to start monitoring progress'}
+                        </p>
+                        {budgetStatus >= 100 && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-extrabold uppercase text-rose-400">
+                                Overspent
+                            </span>
+                        )}
+                        {budgetStatus >= 80 && budgetStatus < 100 && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-extrabold uppercase text-amber-400">
+                                Warning ({budgetStatus.toFixed(0)}%)
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
-
-            {/* Savings Goals Preview */}
-            <div className="mb-8 animate-in" style={{ animationDelay: '0.05s' }}>
+            {/* Savings Goals Preview Component */}
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Savings Goals</h3>
+                    <h3 className="text-base font-extrabold text-white tracking-tight">Active Goals</h3>
                     <button 
                         onClick={() => navigate('/goals')}
-                        style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: '700' }}
-                        className="flex items-center gap-1"
+                        className="text-xs font-bold text-brand-400 hover:text-brand-350 flex items-center gap-1"
                     >
-                        View All <ChevronRight size={14} />
+                        See All <ChevronRight size={14} />
                     </button>
                 </div>
 
                 {goals && goals.length > 0 ? (
-                    <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div className="flex gap-4 overflow-x-auto pb-3 snap-x scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
                         {goals.slice(0, 3).map((goal) => (
                             <div 
                                 key={goal._id} 
-                                className="glass-card" 
                                 onClick={() => navigate('/goals')}
-                                style={{ 
-                                    minWidth: '200px', 
-                                    padding: '16px', 
-                                    borderRadius: '24px', 
-                                    position: 'relative',
-                                    cursor: 'pointer'
-                                }}
+                                className="min-w-[210px] p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium snap-start cursor-pointer hover:border-slate-700 transition-all hover:scale-[1.01]"
                             >
-                                <div className="flex items-center gap-3 mb-3">
+                                <div className="flex items-center gap-3 mb-4">
                                     <div 
                                         className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                                         style={{ background: `${goal.color}15`, color: goal.color }}
@@ -450,309 +425,246 @@ const Dashboard = () => {
                                         {goal.icon}
                                     </div>
                                     <div className="overflow-hidden">
-                                        <p className="text-xs font-bold truncate">{goal.name}</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase">{goal.progress.toFixed(0)}% Complete</p>
+                                        <p className="text-xs font-extrabold text-slate-200 truncate">{goal.name}</p>
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">{goal.progress.toFixed(0)}% Saved</p>
                                     </div>
                                 </div>
-                                <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
+                                
+                                <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden mb-3">
                                     <div 
                                         className="h-full rounded-full"
                                         style={{ width: `${goal.progress}%`, background: goal.color }}
                                     />
                                 </div>
-                                <p className="text-sm font-black">₹{goal.savedAmount.toLocaleString()}</p>
+                                <p className="text-sm font-black text-slate-200">₹{goal.savedAmount.toLocaleString()}</p>
                             </div>
                         ))}
-                        {goals.length > 3 && (
-                            <div 
-                                className="glass-card goal-card flex items-center justify-center" 
-                                onClick={() => navigate('/goals')}
-                            >
-                                <Plus size={24} className="text-gray-400" />
-                            </div>
-                        )}
                     </div>
                 ) : (
                     <div 
-                        className="glass-card p-6 text-center rounded-[24px] border-dashed"
                         onClick={() => navigate('/goals')}
+                        className="p-6 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 cursor-pointer hover:bg-slate-900/50 transition-colors"
                     >
-                        <p className="text-sm text-gray-500 font-medium">Set your first savings goal</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Set a target savings goal</p>
                     </div>
                 )}
             </div>
 
-            {/* Smart Insights Section */}
-            {insights && (
-                <div className="mb-8 animate-in stagger-3">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="section-title">Smart Insights</h3>
-                        <div className="badge badge-primary">
-                            {insights.cards?.length || 0} INSIGHTS
-                        </div>
-                    </div>
-
-                    {insights.cards && insights.cards.length > 0 ? (
-                        <div className="insight-cards-scroll">
-                            {insights.cards.map((card, idx) => {
-                                return (
-                                    <div
-                                        key={card.id}
-                                        className={`insight-card glass-card tag-${card.type || 'neutral'}`}
-                                    >
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">{card.icon}</span>
-                                                <span className="text-xs font-bold uppercase tracking-wider">{card.title}</span>
-                                            </div>
-                                            <div className="badge badge-primary">
-                                                {card.value}
-                                            </div>
-                                        </div>
-
-                                        {card.highlight && (
-                                            <p className="text-base font-bold text-primary mb-2">
-                                                {card.highlight}
-                                            </p>
-                                        )}
-
-                                        <p className="text-xs text-secondary leading-normal">
-                                            {card.description}
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        /* Fallback: legacy single-card */
-                        <div className="insight-card-banner">
-                            <div className="insight-card-emoji">
-                                {insights.trend === 'up' ? <AlertCircle size={24} color="var(--expense)" /> : (insights.trend === 'down' ? <ThumbsUp size={24} color="var(--income)" /> : <Zap size={24} color="var(--primary)" />)}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <p className="font-semibold text-sm text-primary">{insights.message}</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Quick Actions Grid */}
-            <div className="mb-10">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="section-title">Shortcuts</h3>
-                </div>
-                <div className="shortcuts-grid">
-                    {[
-                        { to: '/sources', icon: Wallet, label: 'Wallet', iconColor: 'var(--primary)' },
-                        { to: '/history', icon: History, label: 'Activity', iconColor: 'var(--income)' },
-                        { to: '/account', icon: Settings, label: 'Settings', iconColor: 'var(--expense)' }
-                    ].map((btn, i) => (
-                        <div key={i}>
-                            <Link 
-                                to={btn.to} 
-                                className="shortcut-btn-wrap"
+            {/* Smart Financial Insights Module */}
+            {insights && insights.cards && insights.cards.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-base font-extrabold text-white tracking-tight mb-4">Insights & Alerts</h3>
+                    <div className="flex gap-4 overflow-x-auto pb-3 snap-x scrollbar-thin">
+                        {insights.cards.map((card) => (
+                            <div
+                                key={card.id}
+                                className={`min-w-[280px] p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium snap-start flex flex-col justify-between`}
                             >
-                                <div className="shortcut-btn">
-                                    <btn.icon size={26} color={btn.iconColor} />
+                                <div className="flex justify-between items-start gap-4 mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">{card.icon}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{card.title}</span>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-400 text-[9px] font-black uppercase">
+                                        {card.value}
+                                    </span>
                                 </div>
-                                <span className="shortcut-label">{btn.label}</span>
-                            </Link>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Install Prompt Banner (Only when standalone isn't active) */}
-            {showInstallBtn && isOnline && (
-                <div className="install-banner">
-                    <div className="flex items-center gap-3">
-                        <div className="install-banner-icon">
-                            <Rocket size={24} color="white" />
-                        </div>
-                        <div>
-                            <h4 className="text-white font-bold text-sm">Install App</h4>
-                            <p className="text-white/80 text-xs">Add to home screen for quick access</p>
-                        </div>
+                                {card.highlight && (
+                                    <p className="text-sm font-extrabold text-slate-100 mb-1.5">{card.highlight}</p>
+                                )}
+                                <p className="text-xs text-slate-400 leading-relaxed font-medium">{card.description}</p>
+                            </div>
+                        ))}
                     </div>
-                    <button 
-                        onClick={handleInstallClick}
-                        className="btn btn-sm btn-secondary"
-                    >
-                        Install
-                    </button>
                 </div>
             )}
 
-            {/* My Accounts Section */}
-            <div className="mb-10">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="section-title">My Accounts</h3>
-                    <Link to="/sources" className="section-link">See All</Link>
+            {/* Accounts ledger section */}
+            <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-base font-extrabold text-white tracking-tight">My Accounts</h3>
+                    <Link to="/sources" className="text-xs font-bold text-brand-400 hover:text-brand-350">Manage Accounts</Link>
                 </div>
-                <div className="flex flex-col gap-3">
-                    {sources.slice(0, 3).map((s) => (
-                        <div key={s._id} className="account-list-item" onClick={() => setPeekData({ title: s.name, amount: totals.sources[s._id.toString()] || 0, type: 'account', isIncome: true })}>
-                            <div className="flex items-center gap-4">
-                                <div className="account-list-icon">
-                                    <CreditCard size={20} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {sources.slice(0, 3).map((s) => {
+                        const sBal = totals.sources[s._id.toString()] || 0;
+                        return (
+                            <div 
+                                key={s._id} 
+                                onClick={() => setPeekData({ title: s.name, amount: sBal, type: sBal >= 0 ? 'income' : 'expense' })}
+                                className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium hover:border-slate-700 transition-colors flex items-center justify-between cursor-pointer group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-slate-950/65 flex items-center justify-center text-slate-400 group-hover:text-brand-400 group-hover:bg-brand-600/10 transition-colors">
+                                        <CreditCard size={18} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm text-slate-200 truncate max-w-[120px]">{s.name}</h4>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Deposit account</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="font-semibold text-base">{s.name}</h4>
-                                    <p className="text-xs text-muted">Primary Account</p>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-xs font-black text-slate-300">₹{sBal.toLocaleString()}</span>
+                                    <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-450 transition-colors" />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <p className="font-semibold text-base">****</p>
-                                <ChevronRight size={16} className="text-muted" />
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Recent Transactions Peek */}
+            {/* Recent Ledger Activity */}
             <div className="mb-20">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="section-title">Recent Activity</h3>
-                    <Link to="/history" className="section-link">View History</Link>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-base font-extrabold text-white tracking-tight">Recent Activities</h3>
+                    <Link to="/history" className="text-xs font-bold text-brand-400 hover:text-brand-350">View Ledger</Link>
                 </div>
+                
                 {transactions.length === 0 ? (
-                    <div className="empty-state glass-card">
-                        <div className="empty-state-icon">
-                            <TrendingUp size={40} />
-                        </div>
-                        <h4>No activity yet</h4>
-                        <p>
-                            Start tracking your finances by adding your first income or expense!
-                        </p>
-                        <button 
-                            onClick={() => navigate('/add')}
-                            className="btn btn-primary"
-                        >
-                            Get Started
-                        </button>
+                    <div className="p-8 text-center rounded-2xl border border-slate-800 bg-slate-900/35">
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">No recent transactions recorded</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="space-y-3">
                         {transactions
                             .filter(t => t.purpose !== 'Transfer In')
                             .slice(0, 5)
-                            .map((t, idx) => {
-                                const colors = ['trans-rose', 'trans-violet', 'trans-mint', 'trans-sky'];
-                                const colorClass = colors[idx % colors.length];
-                                
-                                return (
-                                    <div key={t._id} className={`transaction-card ${colorClass}`}>
-                                        <div className="flex items-center gap-4">
-                                            <div style={{
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '16px',
-                                                background: 'rgba(255, 255, 255, 0.4)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                {t.type === 'income' ? <TrendingUp size={22} /> : <TrendingDown size={22} />}
-                                            </div>
-                                            <div>
-                                                <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '2px' }}>
-                                                    {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : 'Transfer'}
-                                                </h4>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: '500' }}>
-                                                    Today, {new Date(t.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                                </p>
-                                            </div>
+                            .map((t) => (
+                                <div 
+                                    key={t._id} 
+                                    onClick={() => setPeekData({ title: t.purpose || t.source || 'Transaction details', amount: t.amount, type: t.type, date: t.date, details: t })}
+                                    className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium flex justify-between items-center hover:border-slate-700 transition-colors cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                            t.type === 'income' 
+                                                ? 'bg-emerald-500/10 text-emerald-450' 
+                                                : t.type === 'expense'
+                                                    ? 'bg-rose-500/10 text-rose-450'
+                                                    : 'bg-blue-500/10 text-blue-450'
+                                        }`}>
+                                            {t.type === 'income' ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
                                         </div>
-                                        <span style={{ fontWeight: '700', fontSize: '1.1rem' }}>
-                                            {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
-                                        </span>
+                                        <div>
+                                            <h4 className="font-bold text-sm text-slate-200">
+                                                {t.type === 'income' ? (t.source || 'Income Source') : t.type === 'expense' ? (t.purpose || 'Expense Purposed') : 'Internal Ledger Transfer'}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                                                {new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {new Date(t.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                            </p>
+                                        </div>
                                     </div>
-                                );
-                            })}
+                                    <span className={`text-sm font-black ${
+                                        t.type === 'income' ? 'text-emerald-450' : 'text-slate-200'
+                                    }`}>
+                                        {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                                    </span>
+                                </div>
+                            ))}
                     </div>
                 )}
             </div>
 
-            {/* Floating Action Button */}
+            {/* Mobile quick transaction FAB triggers navigation to transaction creation */}
             <button
                 onClick={() => navigate('/add')}
-                className="fab"
-                style={{
-                    position: 'fixed',
-                    bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))',
-                    right: '20px',
-                    zIndex: 90,
-                    width: '60px',
-                    height: '60px',
-                    boxShadow: '0 12px 24px -6px rgba(79, 70, 229, 0.5)'
-                }}
+                className="md:hidden fixed bottom-20 right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 text-white shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center z-45"
+                title="Add Transaction Entry"
             >
-                <Plus size={32} />
+                <Plus size={26} strokeWidth={2.5} />
             </button>
 
-            {/* Space for Bottom Nav */}
-            <div style={{ height: '40px' }}></div>
-
-            {/* Peek Overlay (Centered) */}
-            {peekData && (
-                <div
-                    onClick={() => setPeekData(null)}
-                    className="modal-overlay"
-                >
-                    <div className="modal-content text-center p-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-secondary font-semibold text-base">{peekData.title}</h3>
-                            <button onClick={() => setPeekData(null)} className="btn-icon">
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <div style={{
-                            width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px',
-                            background: peekData.type === 'expense' ? 'var(--expense-light)' : 'var(--income-light)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            {peekData.type === 'expense' ? <TrendingDown size={32} color="var(--expense)" /> : <TrendingUp size={32} color="var(--income)" />}
-                        </div>
-                        <h2 className="text-3xl font-black text-primary">
-                            {peekData.type === 'expense' && '-'}{peekData.type === 'income' && '+'}₹{peekData.amount.toLocaleString()}
-                        </h2>
-                    </div>
-                </div>
-            )}
-            {/* Budget Modal */}
-            {showBudgetModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="font-bold text-lg">Set Monthly Budget</h3>
-                            <button onClick={() => setShowBudgetModal(false)} className="btn-icon">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="form-group mb-6">
-                            <label className="form-label">Budget Amount (₹)</label>
-                            <input 
-                                type="number" 
-                                value={newBudgetVal}
-                                onChange={(e) => setNewBudgetVal(e.target.value)}
-                                placeholder="Enter amount..."
-                                className="amount-input"
-                            />
-                        </div>
-                        <button 
-                            onClick={handleUpdateBudget}
-                            className="submit-btn"
+            {/* Quick Peek Detail Overlay Modal */}
+            <AnimatePresence>
+                {peekData && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setPeekData(null)}
+                        className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 15 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 15 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-premium relative overflow-hidden text-center"
                         >
-                            Save Budget
-                        </button>
-                    </div>
-                </div>
-            )}
+                            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 to-indigo-500" />
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{peekData.title}</h3>
+                                <button onClick={() => setPeekData(null)} className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-slate-500 hover:text-slate-350 transition-colors">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            
+                            <div className={`w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center text-lg ${
+                                peekData.type === 'expense' 
+                                    ? 'bg-rose-500/10 text-rose-400' 
+                                    : 'bg-emerald-500/10 text-emerald-450'
+                            }`}>
+                                {peekData.type === 'expense' ? <TrendingDown size={28} /> : <TrendingUp size={28} />}
+                            </div>
+                            
+                            <h2 className="text-3xl font-black text-white">
+                                {peekData.type === 'expense' && '-'}{peekData.type === 'income' && '+'}₹{peekData.amount.toLocaleString()}
+                            </h2>
+                            
+                            {peekData.date && (
+                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider mt-3">
+                                    {new Date(peekData.date).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Budget Configuration Dialog Modal */}
+            <AnimatePresence>
+                {showBudgetModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 15 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 15 }}
+                            className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-premium relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 to-indigo-500" />
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-extrabold text-sm text-white">Configure Budget</h3>
+                                <button onClick={() => setShowBudgetModal(false)} className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-slate-500 hover:text-slate-350 transition-colors">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="space-y-2 mb-6">
+                                <label className="text-xs font-bold text-slate-400 ml-1">Monthly Budget Limit (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={newBudgetVal}
+                                    onChange={(e) => setNewBudgetVal(e.target.value)}
+                                    placeholder="Enter budget cap..."
+                                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-200 text-sm font-bold placeholder-slate-700 transition-colors"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleUpdateBudget}
+                                className="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-extrabold shadow-glow hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                            >
+                                Apply Budget
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 export default Dashboard;
-

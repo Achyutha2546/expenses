@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     TrendingUp,
     TrendingDown,
@@ -16,9 +17,12 @@ import {
     Sun,
     Moon,
     Download,
-    Eye,
-    EyeOff,
-    Settings
+    RefreshCw,
+    X,
+    CheckCircle,
+    AlertCircle,
+    Info,
+    Repeat
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -28,7 +32,7 @@ const History = () => {
     const [sources, setSources] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense'
+    const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense', 'transfer'
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [category, setCategory] = useState('all');
@@ -37,10 +41,11 @@ const History = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('history');
+    const [activeTab, setActiveTab] = useState('history'); // 'history', 'recurring'
     const [recurringTemplates, setRecurringTemplates] = useState([]);
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [toast, setToast] = useState(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -81,6 +86,11 @@ const History = () => {
         fetchData(transactions.length > 0);
     }, [debouncedSearch, filterType, startDate, endDate, category]);
 
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const handleExport = async () => {
         try {
             setExportLoading(true);
@@ -92,27 +102,21 @@ const History = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            showToast('Exported CSV successfully!', 'success');
         } catch (err) {
             console.error('Export failed', err);
-            alert('Failed to export history. Please try again.');
+            showToast('Failed to export history. Please try again.', 'error');
         } finally {
             setExportLoading(false);
         }
     };
 
-    const [toast, setToast] = useState(null);
-
-    const showToast = (message, type = 'info') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
-
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this transaction?')) {
+        if (window.confirm('Are you sure you want to delete this transaction entry?')) {
             try {
                 await api.delete(`/transactions/${id}`);
                 setTransactions(transactions.filter(t => t._id !== id));
-                showToast('Entry deleted successfully', 'info');
+                showToast('Entry deleted successfully', 'success');
             } catch (err) {
                 showToast(err.offline ? err.message : 'Failed to delete transaction', 'error');
             }
@@ -120,7 +124,7 @@ const History = () => {
     };
 
     const handleDeleteRecurring = async (id) => {
-        if (window.confirm('Stop this recurring transaction? Future entries will not be generated.')) {
+        if (window.confirm('Stop this recurring template? Future entries will not be generated.')) {
             try {
                 await api.delete(`/recurring/${id}`);
                 setRecurringTemplates(recurringTemplates.filter(t => t._id !== id));
@@ -131,14 +135,6 @@ const History = () => {
         }
     };
 
-    const getTimeLabel = (date) => {
-        const hours = new Date(date).getHours();
-        if (hours >= 5 && hours < 12) return { label: 'Morning', icon: <Sun size={12} color="#f59e0b" /> };
-        if (hours >= 12 && hours < 17) return { label: 'Afternoon', icon: <Sun size={12} color="#fbbf24" /> };
-        if (hours >= 17 && hours < 21) return { label: 'Evening', icon: <Moon size={12} color="#8b5cf6" /> };
-        return { label: 'Night', icon: <Moon size={12} color="#4c1d95" /> };
-    };
-
     const formatTime = (date) => {
         return new Date(date).toLocaleTimeString(undefined, { 
             hour: '2-digit', 
@@ -147,11 +143,13 @@ const History = () => {
         });
     };
 
-    if (loading) return (
-        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-            <div className="loader"></div>
-        </div>
-    );
+    if (loading) {
+        return (
+            <div className="container flex justify-center items-center min-h-[75vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     const displayTransactions = transactions
         .filter(t => t.purpose !== 'Initial Balance Setup' && t.purpose !== 'Transfer In');
@@ -160,194 +158,180 @@ const History = () => {
     const expenseCategories = ['Food', 'Rent', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Other'];
 
     return (
-        <div className="container animate-in">
-            {/* Toast Notifications */}
-            {toast && (
-                <div className="toast-container">
-                    <div className={`toast ${toast.type}`}>
-                        <div style={{ 
-                            width: '24px', 
-                            height: '24px', 
-                            borderRadius: '50%', 
-                            background: toast.type === 'success' ? 'var(--income)' : (toast.type === 'error' ? 'var(--expense)' : 'var(--primary)'),
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white'
-                        }}>
-                             {toast.type === 'success' ? '✓' : (toast.type === 'error' ? '!' : 'i')}
-                        </div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{toast.message}</span>
-                    </div>
-                </div>
-            )}
-            {/* Offline Banner */}
+        <div className="container relative pb-12 select-none">
+            {/* Custom toast warnings */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-premium border text-xs font-semibold ${
+                            toast.type === 'success' 
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450' 
+                                : toast.type === 'error'
+                                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-450'
+                                    : 'bg-blue-500/10 border-blue-500/20 text-blue-450'
+                        }`}
+                    >
+                        {toast.type === 'success' && <CheckCircle size={16} />}
+                        {toast.type === 'error' && <AlertCircle size={16} />}
+                        {toast.type === 'info' && <Info size={16} />}
+                        <span>{toast.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Offline Alert */}
             {!window.navigator.onLine && (
-                <div style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid var(--expense)',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }} className="pulse-animation">
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--expense)' }}></div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--expense)' }}>Offline Mode: View only.</span>
+                <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-xs font-bold text-rose-400">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span>Offline Mode — Editing is disabled.</span>
                 </div>
             )}
 
-            {/* Tab Selector */}
-            <div className="flex gap-4 mb-6 border-b border-gray-100 dark:border-gray-800">
-                <button 
-                    onClick={() => setActiveTab('history')}
-                    style={{ 
-                        padding: '12px 4px', 
-                        fontSize: '0.9rem', 
-                        fontWeight: '700', 
-                        color: activeTab === 'history' ? 'var(--primary)' : 'var(--text-muted)',
-                        borderBottom: activeTab === 'history' ? '2px solid var(--primary)' : 'none',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    History
-                </button>
-                <button 
-                    onClick={() => setActiveTab('recurring')}
-                    style={{ 
-                        padding: '12px 4px', 
-                        fontSize: '0.9rem', 
-                        fontWeight: '700', 
-                        color: activeTab === 'recurring' ? 'var(--primary)' : 'var(--text-muted)',
-                        borderBottom: activeTab === 'recurring' ? '2px solid var(--primary)' : 'none',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    Recurring
-                </button>
-            </div>
-
-            {/* Header Area */}
+            {/* Top Navigation Headers */}
             <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        style={{
-                            background: 'var(--glass)',
-                            color: 'var(--text-primary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
+                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.3px' }}>History</h1>
+                    <h1 className="text-lg font-black text-white tracking-tight">Ledger Logs</h1>
                 </div>
-                <div className="flex gap-2">
+                
+                <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowSearch(!showSearch)}
-                        style={{
-                            background: showSearch ? 'var(--primary)' : 'var(--glass)',
-                            color: showSearch ? 'white' : 'var(--text-primary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
+                        onClick={() => { setShowSearch(!showSearch); if(showFilters) setShowFilters(false); }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                            showSearch 
+                                ? 'bg-brand-600 text-white shadow-glow' 
+                                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title="Search ledger"
                     >
                         <Search size={18} />
                     </button>
                     <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        style={{
-                            background: showFilters ? 'var(--primary)' : 'var(--glass)',
-                            color: showFilters ? 'white' : 'var(--text-primary)',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
+                        onClick={() => { setShowFilters(!showFilters); if(showSearch) setShowSearch(false); }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                            showFilters 
+                                ? 'bg-brand-600 text-white shadow-glow' 
+                                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title="Filters options"
                     >
                         <Filter size={18} />
                     </button>
                     <button 
                         onClick={() => fetchData(true)} 
                         disabled={isRefreshing}
-                        style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors disabled:opacity-50"
+                        title="Sync ledger"
                     >
-                        <Settings size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                        <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
                     </button>
                     <button 
                         onClick={handleExport} 
                         disabled={exportLoading}
-                        style={{ background: 'var(--primary-gradient)', color: 'white', padding: '0 12px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: '700', border: 'none', boxShadow: '0 4px 12px -2px rgba(139, 92, 246, 0.3)' }}
+                        className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-glow hover:scale-105 active:scale-95 transition-all"
                     >
-                        {exportLoading ? <div className="loader" style={{ width: '14px', height: '14px', borderWidth: '2px' }}></div> : <Download size={16} />}
-                        CSV
+                        {exportLoading ? (
+                            <div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" />
+                        ) : (
+                            <Download size={14} />
+                        )}
+                        <span>Export CSV</span>
                     </button>
                 </div>
             </header>
 
-            {/* Search Bar */}
-            {showSearch && (
-                <div className="animate-in mb-6">
-                    <div style={{ position: 'relative' }}>
-                        <input
-                            type="text"
-                            placeholder="Find transactions..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{
-                                paddingLeft: '48px',
-                                background: 'var(--bg-card)',
-                                borderRadius: '16px',
-                                border: '1px solid var(--border)'
-                            }}
-                        />
-                        <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
-                    </div>
-                </div>
-            )}
+            {/* Custom Sliding Tab Headers */}
+            <div className="p-1 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex mb-6">
+                <button 
+                    onClick={() => setActiveTab('history')}
+                    className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === 'history' 
+                            ? 'bg-slate-800 text-white shadow-premium' 
+                            : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                >
+                    Log History
+                </button>
+                <button 
+                    onClick={() => setActiveTab('recurring')}
+                    className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === 'recurring' 
+                            ? 'bg-slate-800 text-white shadow-premium' 
+                            : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                >
+                    Recurring Plans
+                </button>
+            </div>
 
-            {/* Advanced Filters */}
-            {showFilters && (
-                <div className="glass-card animate-in mb-6" style={{ padding: '24px', borderRadius: '28px', border: '1px solid var(--border)', position: 'relative' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
-                        <div style={{ flex: '1 1 140px' }}>
-                            <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>START DATE</label>
-                            <input 
-                                type="date" 
-                                value={startDate} 
-                                onChange={(e) => setStartDate(e.target.value)} 
-                                style={{ width: '100%', borderRadius: '14px', padding: '12px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+            {/* Search Input Accordion */}
+            <AnimatePresence>
+                {showSearch && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden mb-6"
+                    >
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search merchant, description, category..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/60 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-250 text-slate-200 text-sm font-semibold transition-colors"
                             />
                         </div>
-                        <div style={{ flex: '1 1 140px' }}>
-                            <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>END DATE</label>
-                            <input 
-                                type="date" 
-                                value={endDate} 
-                                onChange={(e) => setEndDate(e.target.value)} 
-                                style={{ width: '100%', borderRadius: '14px', padding: '12px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-                            />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Filter Drawer Panel */}
+            <AnimatePresence>
+                {showFilters && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 shadow-premium relative mb-6"
+                    >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={(e) => setStartDate(e.target.value)} 
+                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={(e) => setEndDate(e.target.value)} 
+                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '6px', display: 'block', letterSpacing: '0.05em' }}>CATEGORY</label>
-                        <div style={{ position: 'relative' }}>
+                        
+                        <div className="space-y-1 mb-6">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Filter by Category</label>
                             <select 
                                 value={category} 
                                 onChange={(e) => setCategory(e.target.value)}
-                                style={{ width: '100%', borderRadius: '14px', padding: '14px', background: 'var(--glass)', color: 'var(--text-primary)', border: '1px solid var(--border)', appearance: 'none' }}
+                                className="w-full rounded-xl px-4 py-3 bg-slate-950 border border-slate-850 text-slate-250 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                             >
                                 <option value="all">All Categories</option>
                                 {[...incomeCategories, ...expenseCategories].sort().map(c => (
@@ -355,124 +339,113 @@ const History = () => {
                                 ))}
                             </select>
                         </div>
-                    </div>
-                    <button 
-                        onClick={() => {
-                            setStartDate('');
-                            setEndDate('');
-                            setCategory('all');
-                            setFilterType('all');
-                            setSearchQuery('');
-                            setDebouncedSearch('');
-                        }}
-                        style={{ width: '100%', padding: '14px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.08)', color: 'var(--expense)', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '0.85rem', fontWeight: '700' }}
-                    >
-                        Reset All Filters
-                    </button>
-                    {isRefreshing && (
-                        <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                            <div className="loader" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
-                        </div>
-                    )}
-                </div>
-            )}
+                        
+                        <button 
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                                setCategory('all');
+                                setFilterType('all');
+                                setSearchQuery('');
+                                setDebouncedSearch('');
+                                showToast('All filter states reset', 'info');
+                            }}
+                            className="w-full py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/15 font-extrabold text-xs transition-colors"
+                        >
+                            Reset Filters
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* Filter Tabs */}
-            <div className="flex gap-2 mb-6" style={{ overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+            {/* Filter category tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-6">
                 {['all', 'income', 'expense', 'transfer'].map((type) => (
                     <button
                         key={type}
                         onClick={() => setFilterType(type)}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: '20px',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            whiteSpace: 'nowrap',
-                            background: filterType === type ? 'var(--primary)' : 'var(--glass)',
-                            color: filterType === type ? 'white' : 'var(--text-secondary)',
-                            border: '1px solid var(--border)',
-                            textTransform: 'capitalize'
-                        }}
+                        className={`px-4 py-2 rounded-full text-xs font-bold capitalize border transition-all ${
+                            filterType === type 
+                                ? 'bg-brand-600 border-brand-500 text-white shadow-glow' 
+                                : 'bg-slate-900/60 border-slate-850 text-slate-400 hover:text-slate-200'
+                        }`}
                     >
                         {type}
                     </button>
                 ))}
             </div>
 
-            {/* Quick Summary Banner */}
-            <div className="glass-card mb-8" style={{ padding: '20px', borderRadius: '24px', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '4px' }}>Transactions</p>
-                    <p style={{ fontWeight: '700', fontSize: '1.25rem' }}>{displayTransactions.length}</p>
+            {/* Summary Banner */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium text-center">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Volume</span>
+                    <span className="text-xl font-black text-white">{displayTransactions.length}</span>
                 </div>
-                <div style={{ width: '1px', background: 'var(--border)', height: '24px' }}></div>
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '4px' }}>Monthly Avg</p>
-                    <p style={{ fontWeight: '700', fontSize: '1.25rem' }}>₹{(displayTransactions.reduce((a, b) => a + b.amount, 0) / Math.max(1, displayTransactions.length)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium text-center">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Monthly Avg</span>
+                    <span className="text-xl font-black text-white">
+                        ₹{(displayTransactions.reduce((a, b) => a + b.amount, 0) / Math.max(1, displayTransactions.length)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
                 </div>
             </div>
 
-            {/* Recurring Templates List */}
+            {/* Recurring Section */}
             {activeTab === 'recurring' && (
-                <div className="flex flex-col gap-4 animate-in">
+                <div className="space-y-4">
                     {recurringTemplates.length === 0 ? (
-                        <div className="glass-card text-center p-12">
-                            <p className="text-gray-500 font-bold">No active recurring transactions</p>
-                            <p className="text-xs text-gray-400 mt-2">Add a new transaction and check "Repeat" to start automation.</p>
+                        <div className="p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30">
+                            <Repeat size={32} className="text-slate-650 mx-auto mb-3" />
+                            <p className="text-sm font-bold text-slate-400">No active automations</p>
+                            <p className="text-xs text-slate-500 mt-1">Check "Repeat" on any new transaction to enable recurring logs.</p>
                         </div>
                     ) : (
                         recurringTemplates.map((template) => (
-                            <div key={template._id} className="glass-card p-5 rounded-2xl flex items-center justify-between border-dashed border-gray-200">
+                            <div key={template._id} className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-700 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '12px',
-                                        background: template.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: template.type === 'income' ? 'var(--income)' : 'var(--expense)' }}></div>
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                        template.type === 'income' ? 'bg-emerald-500/10 text-emerald-450' : 'bg-rose-500/10 text-rose-450'
+                                    }`}>
+                                        <Repeat size={18} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm">{template.description || template.category}</h4>
-                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase mt-1">
+                                        <h4 className="font-bold text-sm text-slate-200">{template.description || template.category}</h4>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
                                             <span>₹{template.amount.toLocaleString()}</span>
                                             <span>•</span>
                                             <span>{template.frequency}</span>
                                             <span>•</span>
-                                            <span style={{ color: 'var(--primary)' }}>{template.source}</span>
+                                            <span className="text-brand-400">{template.source}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => handleDeleteRecurring(template._id)}
-                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                    className="p-2 rounded-lg text-slate-450 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
+                                    title="Cancel template automation"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         ))
                     )}
                 </div>
             )}
-            
-            {/* Transaction List (conditional) */}
+
+            {/* History logs section */}
             {activeTab === 'history' && (
-                <div className="flex flex-col gap-6">
+                <div className="space-y-6">
                     {displayTransactions.length === 0 ? (
-                        <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)', marginTop: '20px' }}>
-                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                                <Calendar size={40} color="var(--primary)" opacity={0.4} />
-                            </div>
-                            <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No records found</h4>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
-                                We couldn't find any transactions. Try adjusting your search or filters.
+                        <div className="p-12 text-center rounded-3xl border border-slate-800 bg-slate-900/60 shadow-premium">
+                            <Calendar size={40} className="text-slate-600 mx-auto mb-4" />
+                            <h4 className="text-sm font-bold text-slate-350">No transactions matched query</h4>
+                            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 mb-6">
+                                We couldn't find any transaction matches. Try clearing active filter parameters.
                             </p>
-                            <Link to="/add" style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', textDecoration: 'none', display: 'inline-block' }}>
-                                Add New Entry
+                            <Link 
+                                to="/add" 
+                                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-glow inline-block"
+                            >
+                                Record Entry
                             </Link>
                         </div>
                     ) : (
@@ -498,85 +471,75 @@ const History = () => {
                                 }
                             });
 
-                            return groups.map((group, gIdx) => (
-                                <div key={group.date} className="animate-in" style={{ animationDelay: `${gIdx * 0.05}s` }}>
-                                    <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            return groups.map((group) => (
+                                <div key={group.date} className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             {group.date}
                                         </span>
-                                        <div style={{ flex: 1, height: '1px', background: 'var(--border)', opacity: 0.5 }}></div>
+                                        <div className="flex-1 h-[1px] bg-slate-900" />
                                     </div>
-                                    <div className="flex flex-col gap-2">
+                                    
+                                    <div className="space-y-2.5">
                                         {group.items.map((t) => {
-                                            const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Unknown';
-                                            const toSourceName = t.type === 'transfer' ? (sources.find(s => s._id.toString() === t.toSourceId?.toString())?.name || 'Unknown') : '';
+                                            const sourceName = sources.find(s => s._id.toString() === t.sourceId?.toString())?.name || 'Deposit';
+                                            const toSourceName = t.type === 'transfer' ? (sources.find(s => s._id.toString() === t.toSourceId?.toString())?.name || 'Deposit') : '';
 
                                             return (
-                                                <div key={t._id} className="glass-card" style={{
-                                                    padding: '16px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    background: 'var(--bg-card)',
-                                                    borderRadius: '16px',
-                                                    border: '1px solid var(--border)',
-                                                    transition: 'transform 0.2s',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => navigate('/add', { state: { transaction: t } })}
+                                                <div 
+                                                    key={t._id} 
+                                                    onClick={() => navigate('/add', { state: { transaction: t } })}
+                                                    className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-700 transition-colors cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div style={{
-                                                            width: '44px',
-                                                            height: '44px',
-                                                            borderRadius: '14px',
-                                                            background: t.type === 'income' ? 'rgba(16, 185, 129, 0.1)' : t.type === 'expense' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}>
-                                                            {t.type === 'income' ? <TrendingUp size={20} color="var(--income)" /> : t.type === 'expense' ? <TrendingDown size={20} color="var(--expense)" /> : <Plus size={20} color="var(--primary)" style={{ transform: 'rotate(45deg)' }} />}
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                                            t.type === 'income' 
+                                                                ? 'bg-emerald-500/10 text-emerald-450' 
+                                                                : t.type === 'expense' 
+                                                                    ? 'bg-rose-500/10 text-rose-450' 
+                                                                    : 'bg-blue-500/10 text-blue-450'
+                                                        }`}>
+                                                            {t.type === 'income' ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <h4 style={{ fontSize: '0.95rem', fontWeight: '750', color: 'var(--text-primary)' }}>
-                                                                    {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `To ${toSourceName}`}
+                                                                <h4 className="font-extrabold text-sm text-slate-200">
+                                                                    {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `Transfer to ${toSourceName}`}
                                                                 </h4>
-                                                                {t.category && (
-                                                                    <span className="badge" style={{ 
-                                                                        background: `var(--cat-${t.category.toLowerCase()}, var(--cat-other))`,
-                                                                        color: 'white',
-                                                                        opacity: 0.9,
-                                                                        padding: '1px 6px',
-                                                                        borderRadius: '4px',
-                                                                        fontSize: '0.6rem'
-                                                                    }}>
+                                                                {t.category && t.category !== 'General' && (
+                                                                    <span className="px-1.5 py-0.5 rounded bg-slate-850 text-slate-400 text-[8px] font-extrabold uppercase">
                                                                         {t.category}
                                                                     </span>
                                                                 )}
-                                                                {t.isRecurring && (
-                                                                    <span style={{ fontSize: '10px' }}>🔄</span>
-                                                                )}
                                                             </div>
-                                                            <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                                            <div className="flex items-center gap-2 text-[10px] text-slate-550 text-slate-500 font-bold">
                                                                 <span>{formatTime(t.date)}</span>
-                                                                <span style={{ opacity: 0.3 }}>•</span>
+                                                                <span>•</span>
                                                                 <span>{t.type === 'transfer' ? `From ${sourceName}` : sourceName}</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <p className="text-amount" style={{
-                                                            color: t.type === 'income' ? 'var(--income)' : 'var(--text-primary)'
-                                                        }}>
-                                                            {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}₹{t.amount.toLocaleString()}
-                                                        </p>
-                                                        <div className="flex gap-3 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
-                                                            <Link to="/add" state={{ transaction: t }} style={{ color: 'var(--text-muted)' }}>
-                                                                <Edit2 size={14} />
-                                                            </Link>
-                                                            <button onClick={() => handleDelete(t._id)} style={{ color: 'var(--text-muted)', background: 'transparent', padding: 0 }}>
-                                                                <Trash2 size={14} />
+                                                    
+                                                    <div className="text-right flex flex-col items-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                        <span className={`text-sm font-black ${
+                                                            t.type === 'income' ? 'text-emerald-450' : 'text-slate-200'
+                                                        }`}>
+                                                            {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                                                        </span>
+                                                        <div className="flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                            <button 
+                                                                onClick={() => navigate('/add', { state: { transaction: t } })} 
+                                                                className="text-slate-500 hover:text-brand-400 transition-colors p-0.5"
+                                                                title="Edit ledger log"
+                                                            >
+                                                                <Edit2 size={13} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDelete(t._id)} 
+                                                                className="text-slate-500 hover:text-rose-450 transition-colors p-0.5"
+                                                                title="Delete ledger log"
+                                                            >
+                                                                <Trash2 size={13} />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -590,9 +553,7 @@ const History = () => {
                     )}
                 </div>
             )}
-
-            <div style={{ paddingBottom: '60px' }}></div>
-        </div >
+        </div>
     );
 };
 

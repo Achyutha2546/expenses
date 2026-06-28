@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
-import { ArrowLeft, Save, Plus, Landmark, Calendar, FileText, ChevronDown, Settings, Target, TrendingUp, TrendingDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    ArrowLeft, 
+    Landmark, 
+    Calendar, 
+    FileText, 
+    TrendingUp, 
+    TrendingDown, 
+    AlertCircle,
+    Info,
+    CheckCircle
+} from 'lucide-react';
 
 const AddEntry = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const editingTransaction = location.state?.transaction;
+    const defaultType = location.state?.defaultType || 'expense';
 
     const getLocalTime = (date = new Date()) => {
         const offset = date.getTimezoneOffset() * 60000;
@@ -15,14 +27,14 @@ const AddEntry = () => {
 
     const [formData, setFormData] = useState(() => {
         const base = {
-            type: 'expense',
+            type: defaultType,
             amount: '',
             sourceId: '',
             toSourceId: '',
             date: getLocalTime(),
             purpose: '',
             source: '',
-            category: '',
+            category: 'General',
             isRecurring: false,
             frequency: 'monthly'
         };
@@ -36,17 +48,30 @@ const AddEntry = () => {
                 date: getLocalTime(new Date(editingTransaction.date)),
                 purpose: editingTransaction.purpose || '',
                 source: editingTransaction.source || '',
-                category: editingTransaction.category || '',
+                category: editingTransaction.category || 'General',
                 isRecurring: editingTransaction.isRecurring || false,
                 frequency: editingTransaction.frequency || 'monthly'
             };
         }
         return base;
     });
+    
     const [sources, setSources] = useState([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [toast, setToast] = useState(null);
+
+    const categories = [
+        { name: 'Food', emoji: '🍔' },
+        { name: 'Transport', emoji: '🚗' },
+        { name: 'Shopping', emoji: '🛍️' },
+        { name: 'Entertainment', emoji: '🎬' },
+        { name: 'Utilities', emoji: '💡' },
+        { name: 'Health', emoji: '💊' },
+        { name: 'Investment', emoji: '📈' },
+        { name: 'General', emoji: '💸' }
+    ];
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
@@ -60,7 +85,11 @@ const AddEntry = () => {
                 setSources(data);
 
                 if (!editingTransaction && data.length > 0) {
-                    setFormData(prev => ({ ...prev, sourceId: data[0]._id, toSourceId: data.length > 1 ? data[1]._id : '' }));
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        sourceId: data[0]._id, 
+                        toSourceId: data.length > 1 ? data[1]._id : '' 
+                    }));
                 }
             } catch (err) {
                 console.error('Error fetching sources', err);
@@ -76,7 +105,6 @@ const AddEntry = () => {
         };
     }, [editingTransaction]);
 
-    // When sourceId changes, ensure toSourceId doesn't point to the same account
     useEffect(() => {
         if (formData.type === 'transfer' && formData.sourceId && sources.length > 0) {
             if (formData.toSourceId === formData.sourceId || !formData.toSourceId) {
@@ -102,7 +130,6 @@ const AddEntry = () => {
         const { name, value } = e.target;
         let newFormData = { ...formData, [name]: value };
 
-        // Auto-categorization logic
         if ((name === 'purpose' || name === 'source') && (!formData.category || formData.category === 'General')) {
             const lowerValue = value.toLowerCase();
             for (const [category, keywords] of Object.entries(KEYWORD_MAP)) {
@@ -115,8 +142,6 @@ const AddEntry = () => {
 
         setFormData(newFormData);
     };
-
-    const [toast, setToast] = useState(null);
 
     const showToast = (message, type = 'info') => {
         setToast({ message, type });
@@ -133,7 +158,6 @@ const AddEntry = () => {
             frequency: formData.frequency
         };
         
-        // Ensure date is sent as UTC ISO string to prevent timezone shifts
         if (payload.date) {
             payload.date = new Date(payload.date).toISOString();
         }
@@ -155,16 +179,14 @@ const AddEntry = () => {
                 response = await api.post('/transactions', payload);
             }
 
-            // Check if this was saved offline
             if (response.offlineSaved) {
-                showToast('Saved offline — will sync automatically ☁️', 'info');
+                showToast('Saved offline — will sync automatically ☁', 'info');
             } else if (editingTransaction) {
                 showToast('Transaction updated successfully!', 'success');
             } else {
                 showToast('Transaction added successfully!', 'success');
             }
             
-            // Graceful redirect
             setTimeout(() => {
                 navigate('/dashboard');
             }, 1000);
@@ -175,212 +197,231 @@ const AddEntry = () => {
         }
     };
 
-
-
-    const users = [
-        { name: '@Richie', img: 'https://i.pravatar.cc/100?u=1' },
-        { name: '@Daisio09', img: 'https://i.pravatar.cc/100?u=2' },
-        { name: '@Cassio33', img: 'https://i.pravatar.cc/100?u=3' },
-        { name: '@Jimi', img: 'https://i.pravatar.cc/100?u=4' },
-        { name: '@Leo', img: 'https://i.pravatar.cc/100?u=5' }
-    ];
-
-    if (initialLoading) return (
-        <div className="container animate-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-            <div className="loader"></div>
-        </div>
-    );
+    if (initialLoading) {
+        return (
+            <div className="container flex justify-center items-center min-h-[75vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="container animate-in" style={{ paddingBottom: '20px' }}>
-            {/* Richie Style Header */}
-            <header className="flex items-center justify-between mb-8 px-2">
-                <button onClick={() => navigate(-1)} style={{ background: 'transparent', color: 'black' }}>
-                    <ArrowLeft size={24} />
+        <div className="container relative max-w-2xl">
+            {/* Custom Premium Toast alerts */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-premium border text-xs font-semibold ${
+                            toast.type === 'success' 
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450' 
+                                : toast.type === 'error'
+                                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-450'
+                                    : 'bg-blue-500/10 border-blue-500/20 text-blue-450'
+                        }`}
+                    >
+                        {toast.type === 'success' && <CheckCircle size={16} />}
+                        {toast.type === 'error' && <AlertCircle size={16} />}
+                        {toast.type === 'info' && <Info size={16} />}
+                        <span>{toast.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Header toolbar */}
+            <header className="flex items-center justify-between mb-8 px-1">
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                >
+                    <ArrowLeft size={20} />
                 </button>
-                <h1 style={{ fontSize: '1.1rem', fontWeight: '700' }}>
-                    {formData.type === 'transfer' ? 'Transfer money' : 'Add transaction'}
+                <h1 className="text-base font-extrabold text-white">
+                    {editingTransaction ? 'Edit Transaction' : (formData.type === 'transfer' ? 'Transfer Funds' : 'Record Transaction')}
                 </h1>
-                <button style={{ background: 'transparent', color: 'black' }}>
-                    <Settings size={22} />
-                </button>
+                <div className="w-10 h-10 opacity-0" /> {/* Spacer */}
             </header>
 
-            {/* Richie Style Type Selector */}
-            <div style={{
-                background: '#f1f5f9',
-                padding: '6px',
-                borderRadius: '20px',
-                display: 'flex',
-                gap: '4px',
-                marginBottom: '32px'
-            }}>
+            {/* Transaction Type Sliding Tab */}
+            <div className="p-1 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex mb-8">
                 {['expense', 'income', 'transfer'].map(type => (
                     <button
                         key={type}
-                        onClick={() => setFormData(prev => ({ ...prev, type }))}
-                        style={{
-                            flex: 1,
-                            padding: '12px',
-                            borderRadius: '16px',
-                            fontSize: '0.85rem',
-                            fontWeight: '700',
-                            textTransform: 'capitalize',
-                            background: formData.type === type ? 'white' : 'transparent',
-                            color: formData.type === type ? 'black' : '#94a3b8',
-                            boxShadow: formData.type === type ? '0 4px 12px rgba(0,0,0,0.05)' : 'none'
-                        }}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, type, category: type === 'transfer' ? '' : prev.category || 'General' }))}
+                        className={`flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200 ${
+                            formData.type === type 
+                                ? 'bg-brand-600 text-white shadow-glow' 
+                                : 'text-slate-400 hover:text-slate-200'
+                        }`}
                     >
                         {type}
                     </button>
                 ))}
             </div>
 
-            {/* User Selection Carousel (Only for Transfer) */}
-            {formData.type === 'transfer' && (
-                <>
-                    <div className="flex gap-4 overflow-x-auto pb-8 mb-4 px-2" style={{ scrollbarWidth: 'none' }}>
-                        {users.map((u, i) => (
-                            <div key={i} className="flex flex-col items-center gap-2" style={{ minWidth: '70px' }}>
-                                <div style={{ 
-                                    width: '64px', 
-                                    height: '64px', 
-                                    borderRadius: '24px', 
-                                    overflow: 'hidden',
-                                    border: u.name === '@Daisio09' ? '3px solid #ddd6fe' : 'none',
-                                    padding: u.name === '@Daisio09' ? '4px' : '0'
-                                }}>
-                                    <img src={u.img} style={{ width: '100%', height: '100%', borderRadius: '20px', objectFit: 'cover' }} alt={u.name} />
+            {/* Form Fields Card */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 space-y-6">
+                    {/* Amount Input */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 ml-1">Amount (₹)</label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-extrabold text-slate-500 text-lg">₹</span>
+                            <input
+                                name="amount"
+                                type="number"
+                                inputMode="decimal"
+                                value={formData.amount}
+                                onChange={handleChange}
+                                required
+                                placeholder="0.00"
+                                className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-950/60 border border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white text-lg font-black placeholder-slate-700 transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Transfer Specific Selector */}
+                    {formData.type === 'transfer' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 ml-1">From Account</label>
+                                <div className="relative">
+                                    <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                                    <select
+                                        name="sourceId"
+                                        value={formData.sourceId}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                    >
+                                        {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                    </select>
                                 </div>
-                                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: u.name === '@Daisio09' ? 'black' : '#94a3b8' }}>{u.name}</span>
                             </div>
-                        ))}
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                        <div className="flex flex-col gap-2">
-                            <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px' }}>From Source</label>
-                            <select
-                                name="sourceId"
-                                value={formData.sourceId}
-                                onChange={handleChange}
-                                style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
-                            >
-                                {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                            </select>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 ml-1">To Account</label>
+                                <div className="relative">
+                                    <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                                    <select
+                                        name="toSourceId"
+                                        value={formData.toSourceId}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                    >
+                                        {sources.filter(s => s._id !== formData.sourceId).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px' }}>Receive Source</label>
-                            <select
-                                name="toSourceId"
-                                value={formData.toSourceId}
+                    ) : (
+                        /* Standard Source Selector */
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-400 ml-1">Payment Method / Source</label>
+                            <div className="relative">
+                                <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                                <select
+                                    name="sourceId"
+                                    value={formData.sourceId}
+                                    onChange={handleChange}
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                >
+                                    {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Date picker */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 ml-1">Date & Time</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                            <input
+                                type="datetime-local"
+                                name="date"
+                                value={formData.date}
                                 onChange={handleChange}
-                                style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
-                            >
-                                {sources.filter(s => s._id !== formData.sourceId).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                            </select>
+                                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 text-slate-250 text-slate-200 text-sm font-semibold outline-none transition-colors"
+                            />
                         </div>
                     </div>
-                    <div style={{ marginBottom: '32px' }}>
-                        <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px', marginBottom: '8px', display: 'block' }}>Note (Optional)</label>
-                        <input
-                            name="purpose"
-                            value={formData.purpose}
-                            onChange={handleChange}
-                            placeholder="Reason for transfer..."
-                            style={{ width: '100%', background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '0.85rem', fontWeight: '700' }}
-                        />
-                    </div>
-                </>
-            )}
 
-            {/* Essential Fields for Non-Transfer */}
-            {formData.type !== 'transfer' && (
-                <div className="flex flex-col gap-4 mb-8">
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <select
-                            name="sourceId"
-                            value={formData.sourceId}
-                            onChange={handleChange}
-                            style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
-                        >
-                            {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                        </select>
-                        <select
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
-                        >
-                            <option value="">Category</option>
-                            <option value="Food">Food</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Health">Health</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <input
-                        name={formData.type === 'income' ? 'source' : 'purpose'}
-                        value={formData.type === 'income' ? formData.source : formData.purpose}
-                        onChange={handleChange}
-                        placeholder={formData.type === 'income' ? 'Source (e.g. Salary)' : 'Purpose (e.g. Dinner)'}
-                        style={{ background: '#f1f5f9', border: 'none', borderRadius: '16px', padding: '14px', fontSize: '0.85rem', fontWeight: '600' }}
-                    />
+                    {/* Description field */}
+                    {formData.type !== 'transfer' ? (
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-400 ml-1">
+                                {formData.type === 'income' ? 'Income Source' : 'Purpose / Merchant'}
+                            </label>
+                            <div className="relative">
+                                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                                <input
+                                    name={formData.type === 'income' ? 'source' : 'purpose'}
+                                    value={formData.type === 'income' ? formData.source : formData.purpose}
+                                    onChange={handleChange}
+                                    placeholder={formData.type === 'income' ? 'Salary, Dividend, Refund...' : 'Rent, Dinner, Swiggy, Uber...'}
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-400 ml-1">Transfer Note (Optional)</label>
+                            <div className="relative">
+                                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
+                                <input
+                                    name="purpose"
+                                    value={formData.purpose}
+                                    onChange={handleChange}
+                                    placeholder="Internal Transfer, Savings Allocations..."
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Category Selection Carousel/Grid for Non-Transfer items */}
+                    {formData.type !== 'transfer' && (
+                        <div className="space-y-3 pt-2">
+                            <span className="text-xs font-bold text-slate-400 ml-1">Select Category</span>
+                            <div className="grid grid-cols-4 gap-2.5">
+                                {categories.map(cat => {
+                                    const active = formData.category === cat.name;
+                                    return (
+                                        <button
+                                            key={cat.name}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, category: cat.name }))}
+                                            className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 border transition-all ${
+                                                active 
+                                                    ? 'bg-brand-600/10 border-brand-500/30 text-brand-400 font-bold scale-[1.03]' 
+                                                    : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 text-slate-350'
+                                            }`}
+                                        >
+                                            <span className="text-lg">{cat.emoji}</span>
+                                            <span className="text-[10px] truncate max-w-full">{cat.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
 
-            <div style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', paddingLeft: '8px', marginBottom: '8px', display: 'block' }}>Amount (₹)</label>
-                <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '800', fontSize: '1rem', color: 'black' }}>₹</span>
-                    <input
-                        name="amount"
-                        type="number"
-                        inputMode="decimal"
-                        value={formData.amount}
-                        onChange={handleChange}
-                        required
-                        placeholder="0.00"
-                        style={{ 
-                            width: '100%', 
-                            background: '#f1f5f9', 
-                            border: 'none', 
-                            borderRadius: '16px', 
-                            padding: '16px 16px 16px 36px', 
-                            fontSize: '1.25rem', 
-                            fontWeight: '800',
-                            color: 'black'
-                        }}
-                    />
-                </div>
-            </div>
-
-            <button
-                onClick={handleSubmit}
-                disabled={loading}
-                style={{ 
-                    width: '100%', 
-                    height: '64px', 
-                    borderRadius: '24px', 
-                    background: 'black', 
-                    color: 'white', 
-                    fontSize: '1rem', 
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px'
-                }}
-            >
-                {loading ? 'Processing...' : (
-                    <>
-                        {formData.type === 'transfer' ? 'Send money' : 'Save Transaction'}
-                        <TrendingUp size={20} style={{ transform: 'rotate(45deg)' }} />
-                    </>
-                )}
-            </button>
+                {/* Submission button */}
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-4.5 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white text-base font-extrabold flex items-center justify-center gap-2 shadow-glow hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                >
+                    {loading ? 'Processing Transaction...' : (
+                        <>
+                            <span>{editingTransaction ? 'Update Entry' : (formData.type === 'transfer' ? 'Complete Transfer' : 'Save Transaction')}</span>
+                        </>
+                    )}
+                </button>
+            </form>
         </div>
     );
 };
