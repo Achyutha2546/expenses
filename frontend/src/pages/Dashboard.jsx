@@ -252,48 +252,39 @@ const Dashboard = () => {
 
             {/* Offline Banner */}
             {!isOnline && (
-                <div style={{
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', animation: 'pulse 2s infinite' }}></div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#f59e0b' }}>Offline — using cached data{getPendingCount() > 0 ? ` · ${getPendingCount()} pending` : ''}</span>
+                <div className="offline-banner">
+                    <div className="offline-banner-dot"></div>
+                    <span className="offline-banner-text">Offline — using cached data{getPendingCount() > 0 ? ` · ${getPendingCount()} pending` : ''}</span>
                 </div>
             )}
 
             {/* Richie Jimenez Style Header */}
-            <header className="flex justify-between items-center mb-8 px-1">
+            <header className="page-header">
                 <div className="flex items-center gap-4">
-                    <div style={{ width: '48px', height: '48px', borderRadius: '16px', overflow: 'hidden' }}>
-                        <img src={user?.photoURL || 'https://i.pravatar.cc/100'} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div className="dashboard-avatar">
+                        <img src={user?.photoURL || 'https://i.pravatar.cc/100'} alt="profile" />
                     </div>
                     <div>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '500' }}>Welcome,</p>
-                        <h1 style={{ fontSize: '1.1rem', fontWeight: '700' }}>{user?.name || user?.email?.split('@')[0] || 'User Profile'}</h1>
+                        <p className="text-meta">Welcome,</p>
+                        <h1 className="text-primary font-bold text-lg">{user?.name || user?.email?.split('@')[0] || 'User Profile'}</h1>
                     </div>
                 </div>
-                <button onClick={() => fetchData(true)} style={{ color: 'var(--text-primary)', background: 'transparent' }}>
-                    <History size={22} />
+                <button onClick={() => fetchData(true)} className="btn-icon">
+                    <History size={20} />
                 </button>
             </header>
             <div className="flex gap-2 mb-6">
                 {showInstallBtn && (
                     <button
                         onClick={handleInstallClick}
-                        style={{ background: 'var(--primary)', color: 'white', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'pulse 2s infinite' }}
+                        className="btn-icon btn-icon-lg btn-primary"
                     >
                         <Download size={20} />
                     </button>
                 )}
                 <button
                     onClick={toggleTheme}
-                    style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="btn-icon btn-icon-lg"
                 >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
@@ -304,89 +295,63 @@ const Dashboard = () => {
                             navigate('/');
                         }
                     }}
-                    style={{ background: 'rgba(244, 63, 94, 0.12)', color: 'var(--expense)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="btn-icon btn-icon-lg btn-danger"
                 >
                     <LogOut size={20} />
                 </button>
-                <Link to="/account" style={{ background: 'var(--glass)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Link to="/account" className="btn-icon btn-icon-lg">
                     <Settings size={20} />
                 </Link>
             </div>
 
             {/* Personalized Engagement Card */}
-            <div className="mb-8 animate-in" style={{ animationDelay: '0.1s' }}>
-                <div className="glass-card" style={{ 
-                    padding: '20px', 
-                    borderRadius: '24px', 
-                    background: 'var(--glass)', 
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
-                    <div style={{ 
-                        width: '48px', 
-                        height: '48px', 
-                        borderRadius: '16px', 
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.5rem',
-                        flexShrink: 0
-                    }}>
+            <div className="mb-8 animate-in stagger-1">
+                <div className="insight-card-banner">
+                    <div className="insight-card-emoji">
                         {budgetStatus < 50 ? '✨' : (budgetStatus < 100 ? '🛡️' : '⚠️')}
                     </div>
                     <div>
-                        <p style={{ fontSize: '0.9rem', fontWeight: '700', lineHeight: '1.4' }}>{getPersonalMessage()}</p>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: '500' }}>Based on your {new Date().toLocaleDateString(undefined, { month: 'long' })} activity</p>
+                        <p className="font-semibold text-base text-primary leading-snug">{getPersonalMessage()}</p>
+                        <p className="text-xs text-muted mt-1">Based on your {new Date().toLocaleDateString(undefined, { month: 'long' })} activity</p>
                     </div>
                 </div>
             </div>
 
             {/* Pill Style Balance Card */}
-            <div className="mb-10">
-                <div style={{
-                    height: '240px',
-                    background: '#00c389',
-                    borderRadius: '44px',
-                    padding: '32px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    marginBottom: '20px'
-                }}>
-                    {/* Background Overlapping Pills */}
-                    <div style={{ position: 'absolute', top: '-40px', left: '-20px', width: '160px', height: '160px', background: '#bbf7d0', borderRadius: '80px', opacity: 0.8 }}></div>
-                    <div style={{ position: 'absolute', top: '10px', right: '-40px', width: '200px', height: '200px', background: '#bbf7d0', borderRadius: '100px', opacity: 0.8 }}></div>
-                    <div style={{ position: 'absolute', bottom: '-60px', left: '100px', width: '180px', height: '180px', background: '#bbf7d0', borderRadius: '90px', opacity: 0.8 }}></div>
+            <div className="balance-card-wrap">
+                <div className="balance-card">
+                    {/* Background Overlapping Orbs */}
+                    <div className="balance-card-orb balance-card-orb-1"></div>
+                    <div className="balance-card-orb balance-card-orb-2"></div>
+                    <div className="balance-card-orb balance-card-orb-3"></div>
 
-                    <div style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="balance-card-content">
                         <div className="flex justify-between items-start mb-1">
-                            <p style={{ color: 'black', fontSize: '0.9rem', fontWeight: '500' }}>Balance</p>
-                            <div style={{ background: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.6rem', fontWeight: '900' }}>VISA</div>
+                            <p className="balance-label">Balance</p>
+                            <div className="balance-card-badge">VISA</div>
                         </div>
-                        <h2 style={{ color: 'black', fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-1px' }}>
+                        <h2 className="balance-amount">
                             ₹{balance.toLocaleString()}
                         </h2>
-                        <p style={{ color: 'black', fontSize: '0.75rem', fontWeight: '500', marginTop: '10px', opacity: 0.6 }}>•••• 5512</p>
+                    </div>
+                    
+                    <div className="balance-card-footer">
+                        <p className="balance-card-dots">•••• 5512</p>
                     </div>
                 </div>
 
                 {/* Richie Jimenez Style Action Row */}
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <button style={{ width: '56px', height: '56px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Download size={22} color="black" />
+                <div className="balance-action-row">
+                    <button className="balance-action-btn">
+                        <Download size={22} />
                     </button>
-                    <button onClick={() => navigate('/add')} style={{ width: '56px', height: '56px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <TrendingUp size={22} color="black" style={{ transform: 'rotate(45deg)' }} />
+                    <button onClick={() => navigate('/add')} className="balance-action-btn">
+                        <TrendingUp size={22} style={{ transform: 'rotate(45deg)' }} />
                     </button>
-                    <button onClick={() => navigate('/add')} style={{ width: '56px', height: '56px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Plus size={22} color="black" />
+                    <button onClick={() => navigate('/add')} className="balance-action-btn">
+                        <Plus size={22} />
                     </button>
-                    <button style={{ flex: 1, height: '56px', borderRadius: '20px', background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <button className="balance-action-primary">
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '3px' }}>
                             {[1,2,3,4,5,6,7,8,9].map(i => <div key={i} style={{ width: '4px', height: '4px', background: 'white', borderRadius: '1px' }}></div>)}
                         </div>
@@ -395,24 +360,15 @@ const Dashboard = () => {
             </div>
 
             {/* Monthly Budget Card */}
-            <div className="glass-card mb-8" style={{
-                padding: '20px',
-                borderRadius: '24px',
-                background: 'var(--glass)',
-                border: '1px solid var(--border)'
-            }}>
-                <div className="flex justify-between items-center mb-4">
+            <div className="budget-card mb-8">
+                <div className="budget-header">
                     <div className="flex items-center gap-3">
-                        <div style={{
-                            width: '40px', height: '40px', borderRadius: '12px',
-                            background: 'rgba(139, 92, 246, 0.12)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <Target size={20} color="var(--primary)" />
+                        <div className="budget-icon-wrap">
+                            <Target size={20} />
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Monthly Budget</h3>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <h3 className="font-bold text-base">Monthly Budget</h3>
+                            <p className="text-xs text-muted mt-1">
                                 {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                             </p>
                         </div>
@@ -422,26 +378,26 @@ const Dashboard = () => {
                             setNewBudgetVal(budget.amount || '');
                             setShowBudgetModal(true);
                         }}
-                        style={{ background: 'var(--glass)', color: 'var(--primary)', padding: '6px 12px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '600' }}
+                        className="btn btn-sm btn-secondary"
                     >
-                        <Edit2 size={14} style={{ marginRight: '4px' }} /> Edit
+                        <Edit2 size={12} /> Edit
                     </button>
                 </div>
 
                 <div className="mb-4">
                     <div className="flex justify-between mb-2">
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Spent: ₹{(budget.totalSpent || 0).toLocaleString()}</span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: budget.amount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                        <span className="text-sm text-secondary">Spent: ₹{(budget.totalSpent || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${budget.amount > 0 ? 'text-primary' : 'text-muted'}`}>
                             {budget.amount > 0 ? `₹${budget.amount.toLocaleString()}` : 'Set Budget'}
                         </span>
                     </div>
                     <div className="progress-bar">
-  <div className="progress-fill" style={{ width: `${Math.min(budgetStatus, 100)}%`, background: isOverBudget ? 'var(--expense)' : 'var(--income)' }}></div>
-</div>
+                        <div className="progress-fill" style={{ width: `${Math.min(budgetStatus, 100)}%` }}></div>
+                    </div>
                 </div>
 
                 <div className="flex justify-between items-center">
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <p className="text-xs text-muted">
                         {budget.amount > 0 ? (
                             isOverBudget 
                                 ? `Exceeded by ₹${(budget.totalSpent - budget.amount).toLocaleString()}` 
@@ -449,13 +405,14 @@ const Dashboard = () => {
                         ) : 'Keep your spending in check'}
                     </p>
                     {budgetStatus >= 100 && (
-  <div className="alert-danger">Budget Exceeded</div>
-)}
-{budgetStatus >= 80 && budgetStatus < 100 && (
-  <div className="alert-warning">Approaching Limit ({budgetStatus.toFixed(0)}% used)</div>
-)}
+                        <div className="alert alert-danger">Budget Exceeded</div>
+                    )}
+                    {budgetStatus >= 80 && budgetStatus < 100 && (
+                        <div className="alert alert-warning">Approaching Limit ({budgetStatus.toFixed(0)}%)</div>
+                    )}
                 </div>
             </div>
+
 
             {/* Savings Goals Preview */}
             <div className="mb-8 animate-in" style={{ animationDelay: '0.05s' }}>
@@ -508,9 +465,8 @@ const Dashboard = () => {
                         ))}
                         {goals.length > 3 && (
                             <div 
-                                className="glass-card flex items-center justify-center" 
+                                className="glass-card goal-card flex items-center justify-center" 
                                 onClick={() => navigate('/goals')}
-                                style={{ minWidth: '100px', borderRadius: '24px', cursor: 'pointer' }}
                             >
                                 <Plus size={24} className="text-gray-400" />
                             </div>
@@ -518,9 +474,8 @@ const Dashboard = () => {
                     </div>
                 ) : (
                     <div 
-                        className="glass-card p-6 text-center rounded-[24px]"
+                        className="glass-card p-6 text-center rounded-[24px] border-dashed"
                         onClick={() => navigate('/goals')}
-                        style={{ cursor: 'pointer', borderStyle: 'dashed' }}
                     >
                         <p className="text-sm text-gray-500 font-medium">Set your first savings goal</p>
                     </div>
@@ -529,10 +484,10 @@ const Dashboard = () => {
 
             {/* Smart Insights Section */}
             {insights && (
-                <div className="mb-8 animate-in" style={{ animationDelay: '0.1s' }}>
+                <div className="mb-8 animate-in stagger-3">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Smart Insights</h3>
-                        <div style={{ background: 'var(--glass)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700', border: '1px solid var(--border)' }}>
+                        <h3 className="section-title">Smart Insights</h3>
+                        <div className="badge badge-primary">
                             {insights.cards?.length || 0} INSIGHTS
                         </div>
                     </div>
@@ -540,66 +495,28 @@ const Dashboard = () => {
                     {insights.cards && insights.cards.length > 0 ? (
                         <div className="insight-cards-scroll">
                             {insights.cards.map((card, idx) => {
-                                const colorMap = {
-                                    danger:  { bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.15)', accent: '#ef4444', valueBg: 'rgba(239, 68, 68, 0.12)' },
-                                    warning: { bg: 'rgba(245, 158, 11, 0.06)', border: 'rgba(245, 158, 11, 0.15)', accent: '#f59e0b', valueBg: 'rgba(245, 158, 11, 0.12)' },
-                                    success: { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.15)', accent: '#10b981', valueBg: 'rgba(16, 185, 129, 0.12)' },
-                                    info:    { bg: 'rgba(99, 102, 241, 0.06)', border: 'rgba(99, 102, 241, 0.15)', accent: '#6366f1', valueBg: 'rgba(99, 102, 241, 0.12)' },
-                                    neutral: { bg: 'var(--glass)', border: 'var(--border)', accent: 'var(--text-primary)', valueBg: 'rgba(148, 163, 184, 0.1)' }
-                                };
-                                const colors = colorMap[card.type] || colorMap.neutral;
-
                                 return (
                                     <div
                                         key={card.id}
-                                        className="insight-card"
-                                        style={{
-                                            background: colors.bg,
-                                            border: `1px solid ${colors.border}`,
-                                            borderRadius: '20px',
-                                            padding: '18px',
-                                            minWidth: '260px',
-                                            maxWidth: '300px',
-                                            flexShrink: 0,
-                                            animationDelay: `${idx * 0.05}s`
-                                        }}
+                                        className={`insight-card glass-card tag-${card.type || 'neutral'}`}
                                     >
-                                        <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
+                                        <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
-                                                <span style={{ fontSize: '1.25rem' }}>{card.icon}</span>
-                                                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: colors.accent }}>{card.title}</span>
+                                                <span className="text-lg">{card.icon}</span>
+                                                <span className="text-xs font-bold uppercase tracking-wider">{card.title}</span>
                                             </div>
-                                            <div style={{
-                                                padding: '4px 10px',
-                                                borderRadius: '10px',
-                                                background: colors.valueBg,
-                                                fontSize: '0.85rem',
-                                                fontWeight: '800',
-                                                color: colors.accent,
-                                                letterSpacing: '-0.3px'
-                                            }}>
+                                            <div className="badge badge-primary">
                                                 {card.value}
                                             </div>
                                         </div>
 
                                         {card.highlight && (
-                                            <p style={{
-                                                fontSize: '1.1rem',
-                                                fontWeight: '800',
-                                                color: 'var(--text-primary)',
-                                                marginBottom: '6px',
-                                                letterSpacing: '-0.5px'
-                                            }}>
+                                            <p className="text-base font-bold text-primary mb-2">
                                                 {card.highlight}
                                             </p>
                                         )}
 
-                                        <p style={{
-                                            fontSize: '0.75rem',
-                                            color: 'var(--text-secondary)',
-                                            lineHeight: '1.5',
-                                            fontWeight: '500'
-                                        }}>
+                                        <p className="text-xs text-secondary leading-normal">
                                             {card.description}
                                         </p>
                                     </div>
@@ -608,24 +525,12 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         /* Fallback: legacy single-card */
-                        <div className="glass-card" style={{
-                            padding: '16px',
-                            borderRadius: '24px',
-                            background: insights.trend === 'up' ? 'rgba(244, 63, 94, 0.05)' : (insights.trend === 'down' ? 'rgba(16, 185, 129, 0.05)' : 'var(--glass)'),
-                            border: `1px solid ${insights.trend === 'up' ? 'rgba(244, 63, 94, 0.1)' : (insights.trend === 'down' ? 'rgba(16, 185, 129, 0.1)' : 'var(--border)')}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '16px'
-                        }}>
-                            <div style={{
-                                width: '48px', height: '48px', borderRadius: '16px',
-                                background: insights.trend === 'up' ? 'rgba(244, 63, 94, 0.15)' : (insights.trend === 'down' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(139, 92, 246, 0.15)'),
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                            }}>
+                        <div className="insight-card-banner">
+                            <div className="insight-card-emoji">
                                 {insights.trend === 'up' ? <AlertCircle size={24} color="var(--expense)" /> : (insights.trend === 'down' ? <ThumbsUp size={24} color="var(--income)" /> : <Zap size={24} color="var(--primary)" />)}
                             </div>
                             <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: '0.85rem', fontWeight: '800', marginBottom: '2px' }}>{insights.message}</p>
+                                <p className="font-semibold text-sm text-primary">{insights.message}</p>
                             </div>
                         </div>
                     )}
@@ -635,33 +540,23 @@ const Dashboard = () => {
             {/* Quick Actions Grid */}
             <div className="mb-10">
                 <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Shortcuts</h3>
+                    <h3 className="section-title">Shortcuts</h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div className="shortcuts-grid">
                     {[
-                        { to: '/sources', icon: Wallet, label: 'Wallet', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
-                        { to: '/history', icon: History, label: 'Activity', color: 'var(--income)', bg: 'rgba(16, 185, 129, 0.12)' },
-                        { to: '/sources', icon: Settings, label: 'Settings', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' }
+                        { to: '/sources', icon: Wallet, label: 'Wallet', iconColor: 'var(--primary)' },
+                        { to: '/history', icon: History, label: 'Activity', iconColor: 'var(--income)' },
+                        { to: '/account', icon: Settings, label: 'Settings', iconColor: 'var(--expense)' }
                     ].map((btn, i) => (
                         <div key={i}>
                             <Link 
                                 to={btn.to} 
-                                style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
+                                className="shortcut-btn-wrap"
                             >
-                                <div style={{
-                                    width: '100%',
-                                    aspectRatio: '1/1',
-                                    borderRadius: '20px',
-                                    background: btn.bg,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'transform 0.2s ease',
-                                    border: '1px solid rgba(255,255,255,0.05)'
-                                }} className="action-btn">
-                                    <btn.icon size={26} color={btn.color} />
+                                <div className="shortcut-btn">
+                                    <btn.icon size={26} color={btn.iconColor} />
                                 </div>
-                                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>{btn.label}</span>
+                                <span className="shortcut-label">{btn.label}</span>
                             </Link>
                         </div>
                     ))}
@@ -670,28 +565,19 @@ const Dashboard = () => {
 
             {/* Install Prompt Banner (Only when standalone isn't active) */}
             {showInstallBtn && isOnline && (
-                <div className="glass-card mb-8 animate-in" style={{
-                    padding: '20px',
-                    borderRadius: '24px',
-                    background: 'var(--primary-gradient)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '16px',
-                    boxShadow: '0 12px 24px -8px rgba(139, 92, 246, 0.5)'
-                }}>
+                <div className="install-banner">
                     <div className="flex items-center gap-3">
-                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="install-banner-icon">
                             <Rocket size={24} color="white" />
                         </div>
                         <div>
-                            <h4 style={{ color: 'white', fontSize: '0.95rem', fontWeight: '800' }}>Install App</h4>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem' }}>Add to home screen for quick access</p>
+                            <h4 className="text-white font-bold text-sm">Install App</h4>
+                            <p className="text-white/80 text-xs">Add to home screen for quick access</p>
                         </div>
                     </div>
                     <button 
                         onClick={handleInstallClick}
-                        style={{ background: 'var(--bg-card)', color: 'var(--primary)', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700' }}
+                        className="btn btn-sm btn-secondary"
                     >
                         Install
                     </button>
@@ -701,24 +587,24 @@ const Dashboard = () => {
             {/* My Accounts Section */}
             <div className="mb-10">
                 <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>My Accounts</h3>
-                    <Link to="/sources" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>See All</Link>
+                    <h3 className="section-title">My Accounts</h3>
+                    <Link to="/sources" className="section-link">See All</Link>
                 </div>
                 <div className="flex flex-col gap-3">
                     {sources.slice(0, 3).map((s) => (
-                        <div key={s._id} className="glass-card" onClick={() => setPeekData({ title: s.name, amount: totals.sources[s._id.toString()] || 0, type: 'account', isIncome: true })} style={{ padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                        <div key={s._id} className="account-list-item" onClick={() => setPeekData({ title: s.name, amount: totals.sources[s._id.toString()] || 0, type: 'account', isIncome: true })}>
                             <div className="flex items-center gap-4">
-                                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--glass)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <CreditCard size={20} color="var(--primary)" />
+                                <div className="account-list-icon">
+                                    <CreditCard size={20} />
                                 </div>
                                 <div>
-                                    <h4 style={{ fontSize: '0.95rem', fontWeight: '600' }}>{s.name}</h4>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Primary Account</p>
+                                    <h4 className="font-semibold text-base">{s.name}</h4>
+                                    <p className="text-xs text-muted">Primary Account</p>
                                 </div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontWeight: '700', fontSize: '1rem' }}>****</p>
-                                <ChevronRight size={16} color="var(--text-muted)" />
+                            <div className="flex items-center gap-2">
+                                <p className="font-semibold text-base">****</p>
+                                <ChevronRight size={16} className="text-muted" />
                             </div>
                         </div>
                     ))}
@@ -728,21 +614,21 @@ const Dashboard = () => {
             {/* Recent Transactions Peek */}
             <div className="mb-20">
                 <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Recent Activity</h3>
-                    <Link to="/history" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>View History</Link>
+                    <h3 className="section-title">Recent Activity</h3>
+                    <Link to="/history" className="section-link">View History</Link>
                 </div>
                 {transactions.length === 0 ? (
-                    <div className="glass-card animate-scale" style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                            <TrendingUp size={40} color="var(--primary)" opacity={0.4} />
+                    <div className="empty-state glass-card">
+                        <div className="empty-state-icon">
+                            <TrendingUp size={40} />
                         </div>
-                        <h4 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>No activity yet</h4>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '240px', margin: '0 auto 24px', lineHeight: '1.5' }}>
+                        <h4>No activity yet</h4>
+                        <p>
                             Start tracking your finances by adding your first income or expense!
                         </p>
                         <button 
                             onClick={() => navigate('/add')}
-                            style={{ background: 'var(--primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700' }}
+                            className="btn btn-primary"
                         >
                             Get Started
                         </button>
@@ -813,45 +699,23 @@ const Dashboard = () => {
             {peekData && (
                 <div
                     onClick={() => setPeekData(null)}
-                    style={{
-                        position: 'fixed',
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        backdropFilter: 'blur(16px)',
-                        zIndex: 1000,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '20px',
-                        animation: 'slideUp 0.2s ease-out'
-                    }}
+                    className="modal-overlay"
                 >
-                    <div className="glass-card" style={{
-                        padding: '40px 24px',
-                        textAlign: 'center',
-                        width: '100%',
-                        maxWidth: '600px',
-                        margin: '0 auto',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                        borderRadius: '24px'
-                    }} onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-content text-center p-6" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--text-secondary)' }}>{peekData.title}</h3>
-                            <button onClick={() => setPeekData(null)} style={{ background: 'var(--glass)', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <h3 className="text-secondary font-semibold text-base">{peekData.title}</h3>
+                            <button onClick={() => setPeekData(null)} className="btn-icon">
                                 <X size={16} />
                             </button>
                         </div>
                         <div style={{
                             width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px',
-                            background: peekData.type === 'expense' ? 'rgba(244, 63, 94, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                            background: peekData.type === 'expense' ? 'var(--expense-light)' : 'var(--income-light)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>
                             {peekData.type === 'expense' ? <TrendingDown size={32} color="var(--expense)" /> : <TrendingUp size={32} color="var(--income)" />}
                         </div>
-                        <h2 style={{
-                            fontSize: '3rem', fontWeight: '800', letterSpacing: '-1px',
-                            color: peekData.type === 'balance' ? 'var(--text-primary)' : (peekData.isIncome ? 'var(--income)' : 'var(--expense)')
-                        }}>
+                        <h2 className="text-3xl font-black text-primary">
                             {peekData.type === 'expense' && '-'}{peekData.type === 'income' && '+'}₹{peekData.amount.toLocaleString()}
                         </h2>
                     </div>
@@ -859,64 +723,27 @@ const Dashboard = () => {
             )}
             {/* Budget Modal */}
             {showBudgetModal && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        backdropFilter: 'blur(12px)',
-                        zIndex: 1100,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '20px'
-                    }}
-                >
-                    <div className="glass-card" style={{
-                        padding: '30px',
-                        width: '100%',
-                        maxWidth: '400px',
-                        borderRadius: '24px',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                        background: 'var(--bg-card)'
-                    }}>
+                <div className="modal-overlay">
+                    <div className="modal-content p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: '700' }}>Set Monthly Budget</h3>
-                            <button onClick={() => setShowBudgetModal(false)} style={{ background: 'transparent', color: 'var(--text-muted)' }}>
-                                <X size={24} />
+                            <h3 className="font-bold text-lg">Set Monthly Budget</h3>
+                            <button onClick={() => setShowBudgetModal(false)} className="btn-icon">
+                                <X size={20} />
                             </button>
                         </div>
-                        <div className="mb-6">
-                            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Budget Amount (₹)</label>
+                        <div className="form-group mb-6">
+                            <label className="form-label">Budget Amount (₹)</label>
                             <input 
                                 type="number" 
                                 value={newBudgetVal}
                                 onChange={(e) => setNewBudgetVal(e.target.value)}
                                 placeholder="Enter amount..."
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    borderRadius: '14px',
-                                    background: 'var(--glass)',
-                                    color: 'var(--text-primary)',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '1.1rem',
-                                    fontWeight: '600'
-                                }}
+                                className="amount-input"
                             />
                         </div>
                         <button 
                             onClick={handleUpdateBudget}
-                            style={{
-                                width: '100%',
-                                padding: '16px',
-                                borderRadius: '14px',
-                                background: 'var(--primary-gradient)',
-                                color: 'white',
-                                fontWeight: '700',
-                                border: 'none',
-                                boxShadow: '0 8px 16px -4px rgba(139, 92, 246, 0.4)'
-                            }}
+                            className="submit-btn"
                         >
                             Save Budget
                         </button>
@@ -928,3 +755,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

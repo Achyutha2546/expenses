@@ -25,10 +25,6 @@ const Footer = () => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            style={{
-                                marginTop: '-40px',
-                                textDecoration: 'none'
-                            }}
                         >
                             <div className="fab">
                                 <item.icon size={28} />
@@ -49,12 +45,8 @@ const Footer = () => {
                         <ActiveIcon
                             size={24}
                             strokeWidth={active ? 2.5 : 2}
-                            style={{ color: active ? 'var(--primary)' : 'var(--text-muted)' }}
                         />
-                        <span style={{
-                            fontWeight: active ? '600' : '500',
-                            color: active ? 'var(--primary)' : 'var(--text-muted)'
-                        }}>
+                        <span>
                             {item.label}
                         </span>
                     </Link>
