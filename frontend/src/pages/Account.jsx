@@ -105,16 +105,16 @@ const Account = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                         title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-lg font-black text-white tracking-tight">Account Settings</h1>
+                    <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Account Settings</h1>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                     title="Toggle Dark/Light Mode"
                 >
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -122,7 +122,7 @@ const Account = () => {
             </header>
 
             {/* Profile Summary Card */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 flex items-center gap-5 shadow-premium relative overflow-hidden">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 flex items-center gap-5 shadow-premium relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-brand-500/5 blur-2xl pointer-events-none" />
                 
                 <div className="flex-shrink-0">
@@ -141,10 +141,10 @@ const Account = () => {
                 </div>
                 
                 <div className="truncate flex-1">
-                    <h2 className="text-base font-extrabold text-white truncate">
+                    <h2 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
                         {user?.name || user?.email?.split('@')[0] || 'User Profile'}
                     </h2>
-                    <p className="text-xs text-slate-450 text-slate-400 truncate mt-0.5">
+                    <p className="text-xs text-slate-450 text-slate-600 dark:text-slate-400 truncate mt-0.5">
                         {user?.email || 'unregistered@spendly.io'}
                     </p>
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase text-emerald-400 mt-2.5">
@@ -154,14 +154,14 @@ const Account = () => {
             </div>
 
             {/* Application Security Section */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 shadow-premium">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow flex-shrink-0">
                             <Lock size={20} />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-sm text-slate-200">Security Access Lock</h3>
+                            <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">Security Access Lock</h3>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
                                 {hasLock ? `App Locked (${lockType.toUpperCase()})` : 'Lock application on startup'}
                             </p>
@@ -173,7 +173,7 @@ const Account = () => {
                             else setSettingLock('pin');
                         }}
                         className={`w-12 h-6 rounded-full p-[2px] transition-colors relative border ${
-                            hasLock ? 'bg-brand-600 border-brand-500' : 'bg-slate-950 border-slate-850'
+                            hasLock ? 'bg-brand-600 border-brand-500' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-850'
                         }`}
                         title="Toggle App Lock"
                     >
@@ -184,16 +184,16 @@ const Account = () => {
                 </div>
                 
                 {hasLock && !settingLock && (
-                    <div className="flex gap-2.5 mt-4 pt-3 border-t border-slate-800/50">
+                    <div className="flex gap-2.5 mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/50">
                         <button 
                             onClick={() => setSettingLock('verify-change-pin')} 
-                            className="flex-1 py-2 px-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-300 transition-colors"
+                            className="flex-1 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 transition-colors"
                         >
                             Change PIN
                         </button>
                         <button 
                             onClick={() => setSettingLock('verify-change-pattern')} 
-                            className="flex-1 py-2 px-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-300 transition-colors"
+                            className="flex-1 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 transition-colors"
                         >
                             Change Pattern
                         </button>
@@ -208,8 +208,8 @@ const Account = () => {
 
                 {/* Subsetting lockpad prompts */}
                 {settingLock && (
-                    <div className="flex flex-col gap-4 mt-6 pt-5 border-t border-slate-800/50 items-center">
-                        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+                    <div className="flex flex-col gap-4 mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/50 items-center">
+                        <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                             {settingLock.startsWith('verify') 
                                 ? `Enter current credentials` 
                                 : (setupStep === 1 
@@ -311,7 +311,7 @@ const Account = () => {
                         
                         <button 
                             onClick={() => { setSettingLock(null); setSetupStep(1); setSetupVal(''); setSetupError(''); }} 
-                            className="px-5 py-2.5 rounded-xl border border-slate-850 hover:border-slate-800 text-xs font-extrabold text-slate-400 bg-slate-950/45 transition-colors"
+                            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 text-xs font-extrabold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/45 transition-colors"
                         >
                             Cancel Setup
                         </button>
@@ -320,8 +320,8 @@ const Account = () => {
             </div>
 
             {/* Custom Theme Accent Preferences */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-6">
-                <h3 className="text-sm font-extrabold text-white">App Appearance</h3>
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 shadow-premium space-y-6">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">App Appearance</h3>
                 
                 {/* Accent selector */}
                 <div className="space-y-3">
@@ -339,7 +339,7 @@ const Account = () => {
                                 >
                                     {active && (
                                         <div className="absolute inset-0 border-[3px] border-slate-900 rounded-xl flex items-center justify-center">
-                                            <Check size={14} className="text-white" strokeWidth={3} />
+                                            <Check size={14} className="text-slate-900 dark:text-white" strokeWidth={3} />
                                         </div>
                                     )}
                                 </button>
@@ -349,13 +349,13 @@ const Account = () => {
                 </div>
 
                 {/* Clock select */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950/50 border border-slate-850">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-850">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-450 flex items-center justify-center">
                             <Clock size={18} />
                         </div>
                         <div>
-                            <p className="text-xs font-extrabold text-slate-200">Time Format</p>
+                            <p className="text-xs font-extrabold text-slate-800 dark:text-slate-200">Time Format</p>
                             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
                                 {timeFormat === '12h' ? '12-Hour standard' : '24-Hour Military'}
                             </p>
@@ -364,7 +364,7 @@ const Account = () => {
                     
                     <button
                         onClick={toggleTimeFormat}
-                        className="px-3 py-1.5 rounded-lg border border-slate-850 hover:border-slate-800 text-[10px] font-black uppercase text-slate-350 bg-slate-950/20 transition-colors"
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase text-slate-350 bg-slate-50 dark:bg-slate-950/20 transition-colors"
                     >
                         Switch to {timeFormat === '12h' ? '24H' : '12H'}
                     </button>
@@ -372,14 +372,14 @@ const Account = () => {
             </div>
 
             {/* Smart Alerts Center */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-5">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 shadow-premium space-y-5">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow">
                             <Bell size={20} />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-sm text-slate-200">Push Notifications</h3>
+                            <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">Push Notifications</h3>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
                                 Keep track of spending metrics
                             </p>
@@ -390,7 +390,7 @@ const Account = () => {
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450' 
                             : permission === 'denied'
                                 ? 'bg-rose-500/10 border-rose-500/20 text-rose-450'
-                                : 'bg-slate-950 border-slate-850 text-slate-500'
+                                : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-850 text-slate-500'
                     }`}>
                         {permission === 'granted' ? 'Enabled' : permission === 'denied' ? 'Blocked' : 'Deactivated'}
                     </span>
@@ -427,15 +427,15 @@ const Account = () => {
                             { id: 'budgetWarning', title: '⚠️ Caution Alert (80%)', desc: 'Warn when debit crosses 80% of configured monthly ceiling.' },
                             { id: 'dailyReminder', title: '📝 Daily Bookkeeping', desc: 'Evening alerts prompting manual transaction logging.' }
                         ].map((pref) => (
-                            <div key={pref.id} className="flex justify-between items-center p-3 rounded-2xl bg-slate-950/40 border border-slate-850">
+                            <div key={pref.id} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850">
                                 <div className="space-y-0.5 max-w-[70%]">
-                                    <h4 className="text-xs font-bold text-slate-200">{pref.title}</h4>
+                                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{pref.title}</h4>
                                     <p className="text-[9px] text-slate-500 leading-normal">{pref.desc}</p>
                                 </div>
                                 <button 
                                     onClick={() => updatePreferences({ [pref.id]: !preferences[pref.id] })}
                                     className={`w-10 h-5.5 rounded-full p-[2px] transition-colors border relative ${
-                                        preferences[pref.id] ? 'bg-brand-600 border-brand-500' : 'bg-slate-950 border-slate-850'
+                                        preferences[pref.id] ? 'bg-brand-600 border-brand-500' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-850'
                                     }`}
                                 >
                                     <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-premium transition-transform ${
@@ -449,11 +449,11 @@ const Account = () => {
             </div>
 
             {/* Custom Navigation link */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium">
-                <h3 className="text-sm font-extrabold text-white mb-4">Quick Links</h3>
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 shadow-premium">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white mb-4">Quick Links</h3>
                 <button
                     onClick={() => navigate('/stats')}
-                    className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-850 hover:border-slate-800 text-slate-250 flex items-center justify-between text-xs font-extrabold transition-colors hover:scale-[1.01]"
+                    className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 text-slate-250 flex items-center justify-between text-xs font-extrabold transition-colors hover:scale-[1.01]"
                 >
                     <span className="flex items-center gap-2">
                         <TrendingUp size={16} className="text-emerald-450" />
@@ -464,13 +464,13 @@ const Account = () => {
             </div>
 
             {/* Backup Migration Panel */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-6 shadow-premium space-y-4">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6 shadow-premium space-y-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-450 flex items-center justify-center">
                         <Share2 size={20} />
                     </div>
                     <div>
-                        <h3 className="font-extrabold text-sm text-slate-200">Local Ledger Migration</h3>
+                        <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">Local Ledger Migration</h3>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
                             Sync offline data packages manually
                         </p>
@@ -480,13 +480,13 @@ const Account = () => {
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={exportData}
-                        className="py-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/45 text-xs font-bold text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
+                        className="py-3 rounded-xl border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/45 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
                     >
                         <Share2 size={14} /> <span>Copy Code</span>
                     </button>
                     <button
                         onClick={importData}
-                        className="py-3 rounded-xl border border-slate-850 hover:border-slate-800 bg-slate-950/45 text-xs font-bold text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
+                        className="py-3 rounded-xl border border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/45 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-100 flex items-center justify-center gap-1.5 transition-colors"
                     >
                         <Download size={14} /> <span>Import Code</span>
                     </button>
@@ -527,7 +527,7 @@ const Account = () => {
                             }
                         }
                     }}
-                    className="w-full py-3 rounded-xl border border-slate-855 border-slate-850 text-slate-600 hover:text-rose-450 hover:border-rose-500/30 transition-colors text-xs font-semibold"
+                    className="w-full py-3 rounded-xl border border-slate-855 border-slate-200 dark:border-slate-850 text-slate-600 hover:text-rose-450 hover:border-rose-500/30 transition-colors text-xs font-semibold"
                 >
                     Permanently Terminate Account
                 </button>

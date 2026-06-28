@@ -154,11 +154,11 @@ const Stats = () => {
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold shadow-premium text-center">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-bold shadow-premium text-center">
                     <p className="opacity-70 mb-0.5">
                         {filter === 'monthly' ? `${label} ${currentDate.toLocaleDateString(undefined, { month: 'short' })}` : label}
                     </p>
-                    <p className="text-white">₹{payload[0].value.toLocaleString()}</p>
+                    <p className="text-slate-900 dark:text-white">₹{payload[0].value.toLocaleString()}</p>
                 </div>
             );
         }
@@ -172,17 +172,17 @@ const Stats = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                         title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-lg font-black text-white tracking-tight">Period Analytics</h1>
+                    <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Period Analytics</h1>
                 </div>
                 
                 <Link 
                     to="/account" 
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                     title="Account Settings"
                 >
                     <Settings size={18} />
@@ -190,7 +190,7 @@ const Stats = () => {
             </header>
 
             {/* Filter Bar */}
-            <div className="p-1 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex mb-4">
+            <div className="p-1 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex mb-4">
                 {['daily', 'monthly', 'yearly'].map((type) => (
                     <button
                         key={type}
@@ -201,7 +201,7 @@ const Stats = () => {
                         className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 ${
                             filter === type 
                                 ? 'bg-brand-600 text-white shadow-glow' 
-                                : 'text-slate-400 hover:text-slate-200'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                     >
                         {type}
@@ -210,18 +210,18 @@ const Stats = () => {
             </div>
 
             {/* Date Navigation */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-slate-800/80 mb-6">
-                <button onClick={() => navigateDate(-1)} className="text-slate-400 hover:text-slate-200 transition-colors p-1">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-6">
+                <button onClick={() => navigateDate(-1)} className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 transition-colors p-1">
                     <ChevronLeft size={20} />
                 </button>
-                <span className="text-sm font-extrabold text-slate-200">{getDateDisplay()}</span>
-                <button onClick={() => navigateDate(1)} className="text-slate-400 hover:text-slate-200 transition-colors p-1">
+                <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">{getDateDisplay()}</span>
+                <button onClick={() => navigateDate(1)} className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 transition-colors p-1">
                     <ChevronRight size={20} />
                 </button>
             </div>
 
             {/* Summary Flow Card */}
-            <div className="p-6 rounded-3xl bg-gradient-to-tr from-slate-900 to-brand-950/40 border border-slate-800/80 mb-8 shadow-premium">
+            <div className="p-6 rounded-3xl bg-gradient-to-tr from-slate-900 to-brand-950/40 border border-slate-200 dark:border-slate-800/80 mb-8 shadow-premium">
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <span className="text-[10px] font-bold text-slate-550 text-slate-500 uppercase tracking-widest block mb-0.5">Net Flow</span>
@@ -236,7 +236,7 @@ const Stats = () => {
                     </div>
                 </div>
 
-                <div className="h-[1px] bg-slate-800/60 my-4" />
+                <div className="h-[1px] bg-slate-200 dark:bg-slate-800/60 my-4" />
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -251,9 +251,9 @@ const Stats = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-8 shadow-premium">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-8 shadow-premium">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-extrabold text-white">Flow Activity</h3>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Flow Activity</h3>
                     <div className="flex gap-4">
                         <button 
                             onClick={() => setDisplayType('expense')}
@@ -304,10 +304,10 @@ const Stats = () => {
             {/* Savings Goals */}
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-base font-extrabold text-white tracking-tight">Active Savings</h3>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Active Savings</h3>
                     <button 
                         onClick={() => navigate('/goals')}
-                        className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                         title="Add goal"
                     >
                         <Plus size={16} />
@@ -323,13 +323,13 @@ const Stats = () => {
                         <div 
                             key={i} 
                             onClick={() => navigate('/goals')}
-                            className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium flex items-center justify-between hover:border-slate-700 transition-colors cursor-pointer"
+                            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium flex items-center justify-between hover:border-slate-300 dark:border-slate-700 transition-colors cursor-pointer"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-lg">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-lg">
                                     {goal.icon}
                                 </div>
-                                <h4 className="font-bold text-sm text-slate-200">{goal.name}</h4>
+                                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">{goal.name}</h4>
                             </div>
                             <span className="text-xs font-black text-brand-400">{goal.progress}%</span>
                         </div>
@@ -346,7 +346,7 @@ const Stats = () => {
                         className={`flex-1 py-2 rounded-xl text-xs font-bold capitalize border transition-all ${
                             displayType === type 
                                 ? 'bg-brand-600 border-brand-500 text-white shadow-glow' 
-                                : 'bg-slate-900/60 border-slate-850 text-slate-400 hover:text-slate-200'
+                                : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-850 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                     >
                         {type}
@@ -356,20 +356,20 @@ const Stats = () => {
 
             {/* Breakdown ledger list */}
             <div className="mb-12">
-                <h3 className="text-base font-extrabold text-white tracking-tight mb-4 capitalize">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight mb-4 capitalize">
                     {displayType === 'all' ? 'Ledger' : displayType} Breakdown
                 </h3>
                 
                 <div className="space-y-2.5">
                     {currentTransactions.length === 0 ? (
-                        <div className="p-8 text-center rounded-2xl border border-slate-850 bg-slate-900/35">
+                        <div className="p-8 text-center rounded-2xl border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900/35">
                             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">No transaction logs recorded</p>
                         </div>
                     ) : (
                         currentTransactions.map((t) => (
                             <div 
                                 key={t._id} 
-                                className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-700 transition-colors"
+                                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-300 dark:border-slate-700 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
@@ -380,7 +380,7 @@ const Stats = () => {
                                         {t.type === 'income' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-slate-250 text-slate-200">
+                                        <h4 className="font-bold text-sm text-slate-250 text-slate-800 dark:text-slate-200">
                                             {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : 'Transfer'}
                                         </h4>
                                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
@@ -391,7 +391,7 @@ const Stats = () => {
                                 
                                 <div className="text-right">
                                     <span className={`text-sm font-black ${
-                                        t.type === 'income' ? 'text-emerald-450' : 'text-slate-200'
+                                        t.type === 'income' ? 'text-emerald-450' : 'text-slate-800 dark:text-slate-200'
                                     }`}>
                                         {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
                                     </span>

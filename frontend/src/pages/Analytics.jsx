@@ -113,22 +113,22 @@ const Analytics = () => {
             <header className="flex items-center gap-4 mb-8">
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-lg font-black text-white tracking-tight">Structured Insights</h1>
+                <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Structured Insights</h1>
             </header>
 
             {/* Smart Spending Insights Card */}
             {insights && (
                 <section className="mb-8">
-                    <div className={`p-5 rounded-3xl bg-slate-900 border shadow-premium ${
+                    <div className={`p-5 rounded-3xl bg-white dark:bg-slate-900 border shadow-premium ${
                         insights.trend === 'up' 
                             ? 'border-rose-500/20 bg-gradient-to-tr from-slate-900 to-rose-950/15' 
                             : insights.trend === 'down'
                                 ? 'border-emerald-500/20 bg-gradient-to-tr from-slate-900 to-emerald-950/15'
-                                : 'border-slate-800/80 bg-slate-900/60'
+                                : 'border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60'
                     }`}>
                         <div className="flex items-start justify-between gap-4">
                             <div className="space-y-2">
@@ -141,26 +141,26 @@ const Analytics = () => {
                                         <TrendingUp size={16} className="text-brand-400" />
                                     )}
                                     <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
-                                        insights.trend === 'up' ? 'text-rose-400' : insights.trend === 'down' ? 'text-emerald-450' : 'text-slate-400'
+                                        insights.trend === 'up' ? 'text-rose-400' : insights.trend === 'down' ? 'text-emerald-450' : 'text-slate-600 dark:text-slate-400'
                                     }`}>
                                         Spending Velocity
                                     </span>
                                 </div>
-                                <p className="text-sm font-bold text-slate-200 leading-relaxed">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
                                     {insights.message}
                                 </p>
                                 
                                 {insights.topCategory && insights.topCategory !== 'General' && (
                                     <div className="pt-2">
-                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-950 border border-slate-850 text-xs font-semibold text-slate-400">
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-xs font-semibold text-slate-600 dark:text-slate-400">
                                             <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                                            <span>Primary Channel: <span className="text-slate-200 font-extrabold">{insights.topCategory}</span></span>
+                                            <span>Primary Channel: <span className="text-slate-800 dark:text-slate-200 font-extrabold">{insights.topCategory}</span></span>
                                         </span>
                                     </div>
                                 )}
                             </div>
                             
-                            <div className="p-3 rounded-2xl bg-slate-950 border border-slate-850 text-center min-w-[80px]">
+                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-center min-w-[80px]">
                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">Delta</span>
                                 <span className={`text-base font-black ${
                                     insights.changePercent > 0 ? 'text-rose-450' : 'text-emerald-450'
@@ -180,12 +180,12 @@ const Analytics = () => {
                         <PieChart size={20} />
                     </div>
                     <div>
-                        <h2 className="text-sm font-extrabold text-white">Share by Category</h2>
+                        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">Share by Category</h2>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Debit Allocations</p>
                     </div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 shadow-premium min-h-[350px]">
+                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium min-h-[350px]">
                     {categoryData.length > 0 ? (
                         <div className="h-[280px]">
                             <Pie data={pieData} options={chartOptions} />
@@ -206,12 +206,12 @@ const Analytics = () => {
                         <PieChart size={20} />
                     </div>
                     <div>
-                        <h2 className="text-sm font-extrabold text-white">Spending by Section</h2>
+                        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">Spending by Section</h2>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Category share as % of total</p>
                     </div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 shadow-premium">
+                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium">
                     {categoryData.length > 0 ? (
                         <>
                             {/* Doughnut */}
@@ -252,9 +252,9 @@ const Analytics = () => {
                                                 style={{ background: color }}
                                             />
                                             {/* Label */}
-                                            <span className="text-xs font-semibold text-slate-300 flex-1 truncate">{label}</span>
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex-1 truncate">{label}</span>
                                             {/* Progress bar */}
-                                            <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-slate-950 overflow-hidden">
+                                            <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full transition-all duration-700"
                                                     style={{ width: `${pct}%`, background: color }}
@@ -287,12 +287,12 @@ const Analytics = () => {
 
             {/* Quick Metrics Grid */}
             <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium">
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingDown size={16} className="text-rose-400" />
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Top Spend</span>
                     </div>
-                    <span className="text-base font-extrabold text-slate-200">
+                    <span className="text-base font-extrabold text-slate-800 dark:text-slate-200">
                         {categoryData.length > 0
                             ? categoryData[0].category.charAt(0).toUpperCase() + categoryData[0].category.slice(1)
                             : 'N/A'}
@@ -303,12 +303,12 @@ const Analytics = () => {
                         </span>
                     )}
                 </div>
-                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium">
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingUp size={16} className="text-emerald-450" />
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Spent</span>
                     </div>
-                    <span className="text-base font-extrabold text-slate-200">
+                    <span className="text-base font-extrabold text-slate-800 dark:text-slate-200">
                         ₹{totalSpend.toLocaleString()}
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 block mt-0.5">

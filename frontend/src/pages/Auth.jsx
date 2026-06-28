@@ -85,7 +85,7 @@ const Auth = () => {
                 )}
                 <button
                     onClick={toggleTheme}
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-all duration-200"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-all duration-200"
                     title="Toggle Theme"
                 >
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -97,12 +97,12 @@ const Auth = () => {
                 {/* Brand Header */}
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow mx-auto mb-4">
-                        <Wallet className="text-white" size={30} />
+                        <Wallet className="text-slate-900 dark:text-white" size={30} />
                     </div>
-                    <h1 className="text-2xl font-black tracking-tight text-white mb-1">
+                    <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mb-1">
                         Spendly
                     </h1>
-                    <p className="text-sm text-slate-400 font-medium">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                         {isLogin ? "Welcome back! Sign in to continue." : "Create an account to get started."}
                     </p>
                 </div>
@@ -112,7 +112,7 @@ const Auth = () => {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
-                    className="w-full p-8 rounded-3xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl shadow-premium relative overflow-hidden"
+                    className="w-full p-8 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-xl shadow-premium relative overflow-hidden"
                 >
                     {/* Glowing Top Line Accent */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 to-indigo-500" />
@@ -146,7 +146,7 @@ const Auth = () => {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={signingIn}
-                        className="w-full py-3.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-200 text-sm font-semibold hover:bg-slate-900/35 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                        className="w-full py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 text-sm font-semibold hover:bg-white dark:bg-slate-900/35 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 48 48">
                             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -159,15 +159,15 @@ const Auth = () => {
 
                     {/* Divider separator */}
                     <div className="flex items-center gap-4 my-6">
-                        <div className="flex-1 h-[1px] bg-slate-800/80" />
+                        <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800/80" />
                         <span className="text-slate-550 text-slate-500 text-xs font-semibold uppercase tracking-wider">or</span>
-                        <div className="flex-1 h-[1px] bg-slate-800/80" />
+                        <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800/80" />
                     </div>
 
                     {/* Form submissions */}
                     <form onSubmit={handleEmailSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-1">Email Address</label>
+                            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Email Address</label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                 <input
@@ -176,13 +176,13 @@ const Auth = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-950/50 border border-slate-800 hover:border-slate-750 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-200 placeholder-slate-600 text-sm transition-all duration-200"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 hover:border-slate-750 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-600 text-sm transition-all duration-200"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-1">Password</label>
+                            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Password</label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                 <input
@@ -192,7 +192,7 @@ const Auth = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     minLength={6}
-                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-950/50 border border-slate-800 hover:border-slate-750 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-200 placeholder-slate-600 text-sm transition-all duration-200"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 hover:border-slate-750 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-600 text-sm transition-all duration-200"
                                 />
                             </div>
                         </div>

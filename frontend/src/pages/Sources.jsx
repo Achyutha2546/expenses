@@ -104,16 +104,16 @@ const Sources = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                         title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-lg font-black text-white tracking-tight">Sources & Wallets</h1>
+                    <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Sources & Wallets</h1>
                 </div>
                 <Link 
                     to="/account" 
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                     title="Account Settings"
                 >
                     <Settings size={18} />
@@ -121,12 +121,12 @@ const Sources = () => {
             </header>
 
             {/* Account Addition panel */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 mb-8 shadow-premium relative overflow-hidden">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 mb-8 shadow-premium relative overflow-hidden">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center shadow-glow">
                         <Plus size={18} />
                     </div>
-                    <h3 className="font-extrabold text-sm text-slate-200">Add Account</h3>
+                    <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">Add Account</h3>
                 </div>
 
                 <form onSubmit={handleAdd} className="space-y-4">
@@ -137,7 +137,7 @@ const Sources = () => {
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-200 text-sm font-semibold transition-colors"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-slate-200 text-sm font-semibold transition-colors"
                         />
                     </div>
                     <div className="space-y-2">
@@ -148,7 +148,7 @@ const Sources = () => {
                                 placeholder="Starting Balance"
                                 value={initialBalance}
                                 onChange={(e) => setInitialBalance(e.target.value)}
-                                className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-200 text-sm font-bold placeholder-slate-700 transition-colors"
+                                className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-slate-200 text-sm font-bold placeholder-slate-700 transition-colors"
                             />
                         </div>
                     </div>
@@ -168,7 +168,7 @@ const Sources = () => {
             
             <div className="space-y-3">
                 {sources.length === 0 ? (
-                    <div className="p-12 text-center rounded-2xl border border-slate-800 bg-slate-900/35">
+                    <div className="p-12 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/35">
                         <Wallet size={32} className="text-slate-655 text-slate-600 mx-auto mb-3" />
                         <p className="text-xs font-bold text-slate-500">No accounts configured yet</p>
                     </div>
@@ -176,7 +176,7 @@ const Sources = () => {
                     sources.map((s, index) => (
                         <div 
                             key={s._id} 
-                            className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium"
+                            className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium"
                         >
                             {editingId === s._id ? (
                                 <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ const Sources = () => {
                                         value={editName}
                                         onChange={(e) => setEditName(e.target.value)}
                                         autoFocus
-                                        className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-850 outline-none text-slate-200 text-sm font-semibold focus:border-brand-500 transition-colors"
+                                        className="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 outline-none text-slate-800 dark:text-slate-200 text-sm font-semibold focus:border-brand-500 transition-colors"
                                     />
                                     <button 
                                         onClick={() => handleUpdate(s._id)} 
@@ -196,7 +196,7 @@ const Sources = () => {
                                     </button>
                                     <button 
                                         onClick={() => setEditingId(null)} 
-                                        className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-850 text-slate-500 hover:text-slate-350 flex items-center justify-center transition-colors"
+                                        className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-500 hover:text-slate-350 flex items-center justify-center transition-colors"
                                         title="Cancel Edit"
                                     >
                                         <X size={18} />
@@ -209,14 +209,14 @@ const Sources = () => {
                                             <CreditCard size={20} />
                                         </div>
                                         <div>
-                                            <h4 className="font-extrabold text-sm text-slate-200">{s.name}</h4>
+                                            <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">{s.name}</h4>
                                             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Active Ledger Account</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={() => handleEditClick(s)} 
-                                            className="p-2 rounded-lg text-slate-450 hover:bg-slate-950/65 hover:text-slate-300 transition-colors"
+                                            className="p-2 rounded-lg text-slate-450 hover:bg-slate-50 dark:bg-slate-950/65 hover:text-slate-700 dark:text-slate-300 transition-colors"
                                             title="Edit account name"
                                         >
                                             <Edit2 size={16} />

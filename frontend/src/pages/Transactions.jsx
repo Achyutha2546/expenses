@@ -234,18 +234,18 @@ const AddEntry = () => {
             <header className="flex items-center justify-between mb-8 px-1">
                 <button 
                     onClick={() => navigate(-1)} 
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-base font-extrabold text-white">
+                <h1 className="text-base font-extrabold text-slate-900 dark:text-white">
                     {editingTransaction ? 'Edit Transaction' : (formData.type === 'transfer' ? 'Transfer Funds' : 'Record Transaction')}
                 </h1>
                 <div className="w-10 h-10 opacity-0" /> {/* Spacer */}
             </header>
 
             {/* Transaction Type Sliding Tab */}
-            <div className="p-1 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex mb-8">
+            <div className="p-1 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex mb-8">
                 {['expense', 'income', 'transfer'].map(type => (
                     <button
                         key={type}
@@ -254,7 +254,7 @@ const AddEntry = () => {
                         className={`flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200 ${
                             formData.type === type 
                                 ? 'bg-brand-600 text-white shadow-glow' 
-                                : 'text-slate-400 hover:text-slate-200'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                     >
                         {type}
@@ -264,10 +264,10 @@ const AddEntry = () => {
 
             {/* Form Fields Card */}
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 space-y-6">
+                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 space-y-6">
                     {/* Amount Input */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 ml-1">Amount (₹)</label>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Amount (₹)</label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-extrabold text-slate-500 text-lg">₹</span>
                             <input
@@ -278,7 +278,7 @@ const AddEntry = () => {
                                 onChange={handleChange}
                                 required
                                 placeholder="0.00"
-                                className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-950/60 border border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white text-lg font-black placeholder-slate-700 transition-colors"
+                                className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-850 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-900 dark:text-white text-lg font-black placeholder-slate-700 transition-colors"
                             />
                         </div>
                     </div>
@@ -287,28 +287,28 @@ const AddEntry = () => {
                     {formData.type === 'transfer' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 ml-1">From Account</label>
+                                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">From Account</label>
                                 <div className="relative">
                                     <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
                                     <select
                                         name="sourceId"
                                         value={formData.sourceId}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                                     >
                                         {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                     </select>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 ml-1">To Account</label>
+                                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">To Account</label>
                                 <div className="relative">
                                     <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
                                     <select
                                         name="toSourceId"
                                         value={formData.toSourceId}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                                     >
                                         {sources.filter(s => s._id !== formData.sourceId).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                     </select>
@@ -318,14 +318,14 @@ const AddEntry = () => {
                     ) : (
                         /* Standard Source Selector */
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-1">Payment Method / Source</label>
+                            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Payment Method / Source</label>
                             <div className="relative">
                                 <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
                                 <select
                                     name="sourceId"
                                     value={formData.sourceId}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                                 >
                                     {sources.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                 </select>
@@ -335,7 +335,7 @@ const AddEntry = () => {
 
                     {/* Date picker */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 ml-1">Date & Time</label>
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Date & Time</label>
                         <div className="relative">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
                             <input
@@ -343,7 +343,7 @@ const AddEntry = () => {
                                 name="date"
                                 value={formData.date}
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 text-slate-250 text-slate-200 text-sm font-semibold outline-none transition-colors"
+                                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-brand-500 text-slate-250 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none transition-colors"
                             />
                         </div>
                     </div>
@@ -351,7 +351,7 @@ const AddEntry = () => {
                     {/* Description field */}
                     {formData.type !== 'transfer' ? (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-1">
+                            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">
                                 {formData.type === 'income' ? 'Income Source' : 'Purpose / Merchant'}
                             </label>
                             <div className="relative">
@@ -361,13 +361,13 @@ const AddEntry = () => {
                                     value={formData.type === 'income' ? formData.source : formData.purpose}
                                     onChange={handleChange}
                                     placeholder={formData.type === 'income' ? 'Salary, Dividend, Refund...' : 'Rent, Dinner, Swiggy, Uber...'}
-                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-brand-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
                                 />
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 ml-1">Transfer Note (Optional)</label>
+                            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Transfer Note (Optional)</label>
                             <div className="relative">
                                 <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550 text-slate-500" size={16} />
                                 <input
@@ -375,7 +375,7 @@ const AddEntry = () => {
                                     value={formData.purpose}
                                     onChange={handleChange}
                                     placeholder="Internal Transfer, Savings Allocations..."
-                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-850 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
+                                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-brand-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-700 text-sm font-semibold transition-colors"
                                 />
                             </div>
                         </div>
@@ -384,7 +384,7 @@ const AddEntry = () => {
                     {/* Category Selection Carousel/Grid for Non-Transfer items */}
                     {formData.type !== 'transfer' && (
                         <div className="space-y-3 pt-2">
-                            <span className="text-xs font-bold text-slate-400 ml-1">Select Category</span>
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">Select Category</span>
                             <div className="grid grid-cols-4 gap-2.5">
                                 {categories.map(cat => {
                                     const active = formData.category === cat.name;
@@ -396,7 +396,7 @@ const AddEntry = () => {
                                             className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 border transition-all ${
                                                 active 
                                                     ? 'bg-brand-600/10 border-brand-500/30 text-brand-400 font-bold scale-[1.03]' 
-                                                    : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 text-slate-350'
+                                                    : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-850 hover:border-slate-200 dark:border-slate-800 text-slate-350'
                                             }`}
                                         >
                                             <span className="text-lg">{cat.emoji}</span>

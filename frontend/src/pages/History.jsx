@@ -195,12 +195,12 @@ const History = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
+                        className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors"
                         title="Back to Dashboard"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-lg font-black text-white tracking-tight">Ledger Logs</h1>
+                    <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Ledger Logs</h1>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ const History = () => {
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                             showSearch 
                                 ? 'bg-brand-600 text-white shadow-glow' 
-                                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                         title="Search ledger"
                     >
@@ -220,7 +220,7 @@ const History = () => {
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                             showFilters 
                                 ? 'bg-brand-600 text-white shadow-glow' 
-                                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                         title="Filters options"
                     >
@@ -229,7 +229,7 @@ const History = () => {
                     <button 
                         onClick={() => fetchData(true)} 
                         disabled={isRefreshing}
-                        className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors disabled:opacity-50"
+                        className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors disabled:opacity-50"
                         title="Sync ledger"
                     >
                         <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
@@ -250,13 +250,13 @@ const History = () => {
             </header>
 
             {/* Custom Sliding Tab Headers */}
-            <div className="p-1 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex mb-6">
+            <div className="p-1 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex mb-6">
                 <button 
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all duration-200 ${
                         activeTab === 'history' 
-                            ? 'bg-slate-800 text-white shadow-premium' 
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white shadow-premium' 
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                     }`}
                 >
                     Log History
@@ -265,8 +265,8 @@ const History = () => {
                     onClick={() => setActiveTab('recurring')}
                     className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all duration-200 ${
                         activeTab === 'recurring' 
-                            ? 'bg-slate-800 text-white shadow-premium' 
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white shadow-premium' 
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                     }`}
                 >
                     Recurring Plans
@@ -289,7 +289,7 @@ const History = () => {
                                 placeholder="Search merchant, description, category..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/60 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-250 text-slate-200 text-sm font-semibold transition-colors"
+                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-slate-250 text-slate-800 dark:text-slate-200 text-sm font-semibold transition-colors"
                             />
                         </div>
                     </motion.div>
@@ -303,7 +303,7 @@ const History = () => {
                         initial={{ opacity: 0, y: -15 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -15 }}
-                        className="p-6 rounded-3xl bg-slate-900 border border-slate-800/80 shadow-premium relative mb-6"
+                        className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium relative mb-6"
                     >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-1">
@@ -312,7 +312,7 @@ const History = () => {
                                     type="date" 
                                     value={startDate} 
                                     onChange={(e) => setStartDate(e.target.value)} 
-                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -321,7 +321,7 @@ const History = () => {
                                     type="date" 
                                     value={endDate} 
                                     onChange={(e) => setEndDate(e.target.value)} 
-                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-950 border border-slate-850 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                    className="w-full rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                                 />
                             </div>
                         </div>
@@ -331,7 +331,7 @@ const History = () => {
                             <select 
                                 value={category} 
                                 onChange={(e) => setCategory(e.target.value)}
-                                className="w-full rounded-xl px-4 py-3 bg-slate-950 border border-slate-850 text-slate-250 text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
+                                className="w-full rounded-xl px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-250 text-slate-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-brand-500"
                             >
                                 <option value="all">All Categories</option>
                                 {[...incomeCategories, ...expenseCategories].sort().map(c => (
@@ -367,7 +367,7 @@ const History = () => {
                         className={`px-4 py-2 rounded-full text-xs font-bold capitalize border transition-all ${
                             filterType === type 
                                 ? 'bg-brand-600 border-brand-500 text-white shadow-glow' 
-                                : 'bg-slate-900/60 border-slate-850 text-slate-400 hover:text-slate-200'
+                                : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-850 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'
                         }`}
                     >
                         {type}
@@ -377,13 +377,13 @@ const History = () => {
 
             {/* Summary Banner */}
             <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium text-center">
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium text-center">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Volume</span>
-                    <span className="text-xl font-black text-white">{displayTransactions.length}</span>
+                    <span className="text-xl font-black text-slate-900 dark:text-white">{displayTransactions.length}</span>
                 </div>
-                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 shadow-premium text-center">
+                <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-premium text-center">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Monthly Avg</span>
-                    <span className="text-xl font-black text-white">
+                    <span className="text-xl font-black text-slate-900 dark:text-white">
                         ₹{(displayTransactions.reduce((a, b) => a + b.amount, 0) / Math.max(1, displayTransactions.length)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </span>
                 </div>
@@ -393,14 +393,14 @@ const History = () => {
             {activeTab === 'recurring' && (
                 <div className="space-y-4">
                     {recurringTemplates.length === 0 ? (
-                        <div className="p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30">
+                        <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30">
                             <Repeat size={32} className="text-slate-650 mx-auto mb-3" />
-                            <p className="text-sm font-bold text-slate-400">No active automations</p>
+                            <p className="text-sm font-bold text-slate-600 dark:text-slate-400">No active automations</p>
                             <p className="text-xs text-slate-500 mt-1">Check "Repeat" on any new transaction to enable recurring logs.</p>
                         </div>
                     ) : (
                         recurringTemplates.map((template) => (
-                            <div key={template._id} className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-700 transition-colors">
+                            <div key={template._id} className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-300 dark:border-slate-700 transition-colors">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                                         template.type === 'income' ? 'bg-emerald-500/10 text-emerald-450' : 'bg-rose-500/10 text-rose-450'
@@ -408,7 +408,7 @@ const History = () => {
                                         <Repeat size={18} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-slate-200">{template.description || template.category}</h4>
+                                        <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">{template.description || template.category}</h4>
                                         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
                                             <span>₹{template.amount.toLocaleString()}</span>
                                             <span>•</span>
@@ -435,7 +435,7 @@ const History = () => {
             {activeTab === 'history' && (
                 <div className="space-y-6">
                     {displayTransactions.length === 0 ? (
-                        <div className="p-12 text-center rounded-3xl border border-slate-800 bg-slate-900/60 shadow-premium">
+                        <div className="p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-premium">
                             <Calendar size={40} className="text-slate-600 mx-auto mb-4" />
                             <h4 className="text-sm font-bold text-slate-350">No transactions matched query</h4>
                             <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 mb-6">
@@ -477,7 +477,7 @@ const History = () => {
                                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             {group.date}
                                         </span>
-                                        <div className="flex-1 h-[1px] bg-slate-900" />
+                                        <div className="flex-1 h-[1px] bg-white dark:bg-slate-900" />
                                     </div>
                                     
                                     <div className="space-y-2.5">
@@ -489,7 +489,7 @@ const History = () => {
                                                 <div 
                                                     key={t._id} 
                                                     onClick={() => navigate('/add', { state: { transaction: t } })}
-                                                    className="p-4 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-700 transition-colors cursor-pointer group"
+                                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-premium hover:border-slate-300 dark:border-slate-700 transition-colors cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -503,11 +503,11 @@ const History = () => {
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <h4 className="font-extrabold text-sm text-slate-200">
+                                                                <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
                                                                     {t.type === 'income' ? (t.source || 'Income') : t.type === 'expense' ? (t.purpose || 'Expense') : `Transfer to ${toSourceName}`}
                                                                 </h4>
                                                                 {t.category && t.category !== 'General' && (
-                                                                    <span className="px-1.5 py-0.5 rounded bg-slate-850 text-slate-400 text-[8px] font-extrabold uppercase">
+                                                                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-400 text-[8px] font-extrabold uppercase">
                                                                         {t.category}
                                                                     </span>
                                                                 )}
@@ -522,7 +522,7 @@ const History = () => {
                                                     
                                                     <div className="text-right flex flex-col items-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                         <span className={`text-sm font-black ${
-                                                            t.type === 'income' ? 'text-emerald-450' : 'text-slate-200'
+                                                            t.type === 'income' ? 'text-emerald-450' : 'text-slate-800 dark:text-slate-200'
                                                         }`}>
                                                             {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
                                                         </span>

@@ -62,10 +62,10 @@ const Onboarding = () => {
                 <div className="w-16 h-16 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center mx-auto mb-4 border border-brand-500/20 shadow-glow">
                     <Rocket size={32} />
                 </div>
-                <h1 className="text-2xl font-black tracking-tight text-white mb-2">
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mb-2">
                     Setup your wallet
                 </h1>
-                <p className="text-sm text-slate-400 max-w-xs mx-auto leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
                     Tell us about your current accounts and balances to initialize your Spendly ledger.
                 </p>
             </div>
@@ -75,7 +75,7 @@ const Onboarding = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="w-full max-w-xl p-8 rounded-3xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl shadow-premium relative overflow-hidden"
+                className="w-full max-w-xl p-8 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-xl shadow-premium relative overflow-hidden"
             >
                 {/* Top edge glow */}
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-500 to-indigo-500" />
@@ -90,7 +90,7 @@ const Onboarding = () => {
                                     animate={{ opacity: 1, height: 'auto', scale: 1 }}
                                     exit={{ opacity: 0, height: 0, scale: 0.95 }}
                                     transition={{ duration: 0.2 }}
-                                    className="p-5 rounded-2xl bg-slate-950/40 border border-slate-800/60 relative group"
+                                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 relative group"
                                 >
                                     <div className="flex items-center gap-2 mb-3 text-brand-400 font-bold text-xs uppercase tracking-wider">
                                         <Landmark size={14} />
@@ -105,7 +105,7 @@ const Onboarding = () => {
                                                 value={source.name}
                                                 onChange={(e) => handleChange(index, 'name', e.target.value)}
                                                 required
-                                                className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-800 focus:border-brand-500 outline-none text-slate-200 placeholder-slate-600 text-sm font-semibold transition-colors duration-250"
+                                                className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-200 dark:border-slate-800 focus:border-brand-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-600 text-sm font-semibold transition-colors duration-250"
                                             />
                                         </div>
                                         
@@ -117,7 +117,7 @@ const Onboarding = () => {
                                                     value={source.balance}
                                                     onChange={(e) => handleChange(index, 'balance', e.target.value)}
                                                     required
-                                                    className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-800 focus:border-brand-500 outline-none text-slate-250 text-slate-200 placeholder-slate-600 text-sm font-bold transition-colors duration-250"
+                                                    className="w-full px-0 py-2.5 bg-transparent border-b-2 border-slate-200 dark:border-slate-800 focus:border-brand-500 outline-none text-slate-250 text-slate-800 dark:text-slate-200 placeholder-slate-600 text-sm font-bold transition-colors duration-250"
                                                 />
                                             </div>
                                             
@@ -141,7 +141,7 @@ const Onboarding = () => {
                     <button
                         type="button"
                         onClick={handleAddRow}
-                        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 text-slate-300 font-semibold text-sm transition-all duration-200 hover:scale-[1.01]"
+                        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/20 hover:bg-white dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all duration-200 hover:scale-[1.01]"
                     >
                         <Plus size={18} /> Add Another Account
                     </button>

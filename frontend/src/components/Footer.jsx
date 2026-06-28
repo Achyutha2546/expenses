@@ -74,22 +74,22 @@ const Footer = () => {
         { path: '/stats', icon: BarChart3, label: 'Stats' },
         { path: '/add', icon: Plus, label: 'Add', isFab: true },
         { path: '/analytics', icon: PieChart, label: 'Analytics' },
-        { path: '/account', icon: Settings, label: 'Settings' }
+        { path: '/history', icon: HistoryIcon, label: 'Ledger' }
     ];
 
     return (
         <>
             {/* Desktop Collapsible Sidebar */}
             <aside 
-                className={`fixed top-0 left-0 h-screen bg-slate-900 border-r border-slate-800/80 z-30 transition-all duration-300 md:flex flex-col justify-between hidden ${
+                className={`fixed top-0 left-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800/80 z-30 transition-all duration-300 md:flex flex-col justify-between hidden ${
                     isCollapsed ? 'w-20' : 'w-64'
                 }`}
             >
                 {/* Header Logo */}
                 <div>
-                    <div className="flex items-center gap-3 p-6 border-b border-slate-800/60 overflow-hidden">
+                    <div className="flex items-center gap-3 p-6 border-b border-slate-200 dark:border-slate-800/60 overflow-hidden">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-glow">
-                            <Wallet className="text-white" size={22} />
+                            <Wallet className="text-slate-900 dark:text-white" size={22} />
                         </div>
                         {!isCollapsed && (
                             <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
@@ -109,13 +109,13 @@ const Footer = () => {
                                     className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group relative ${
                                         active 
                                             ? 'bg-brand-600/15 text-brand-400 font-semibold' 
-                                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:bg-slate-800/50 hover:text-slate-800 dark:text-slate-200'
                                     }`}
                                 >
                                     <item.icon 
                                         size={20} 
                                         className={`transition-colors duration-200 ${
-                                            active ? 'text-brand-400' : 'text-slate-400 group-hover:text-slate-200'
+                                            active ? 'text-brand-400' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:text-slate-200'
                                         }`} 
                                     />
                                     {!isCollapsed && (
@@ -124,7 +124,7 @@ const Footer = () => {
                                     
                                     {/* Tooltip for collapsed sidebar */}
                                     {isCollapsed && (
-                                        <div className="absolute left-24 px-3 py-1.5 bg-slate-950 text-slate-200 text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-premium border border-slate-800 z-50 white-space-nowrap">
+                                        <div className="absolute left-24 px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-premium border border-slate-200 dark:border-slate-800 z-50 white-space-nowrap">
                                             {item.label}
                                         </div>
                                     )}
@@ -140,7 +140,7 @@ const Footer = () => {
                 </div>
 
                 {/* Footer Section (Profile + Sign Out + Collapse Toggle) */}
-                <div className="p-4 border-t border-slate-800/60 space-y-3">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800/60 space-y-3">
                     {!isCollapsed && user && (
                         <div className="flex items-center gap-3 px-2 py-1.5 overflow-hidden">
                             <img 
@@ -149,8 +149,8 @@ const Footer = () => {
                                 className="w-10 h-10 rounded-xl object-cover ring-2 ring-slate-800"
                             />
                             <div className="truncate flex-1">
-                                <p className="text-xs text-slate-400 font-medium">Account</p>
-                                <p className="text-sm font-semibold text-slate-200 truncate">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Account</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                                     {user.name || user.email?.split('@')[0]}
                                 </p>
                             </div>
@@ -168,7 +168,7 @@ const Footer = () => {
                             {!isCollapsed && <span className="text-sm font-medium">Sign Out</span>}
                             
                             {isCollapsed && (
-                                <div className="absolute left-24 px-3 py-1.5 bg-slate-950 text-rose-400 text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-premium border border-slate-800 z-50 white-space-nowrap">
+                                <div className="absolute left-24 px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-rose-400 text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-premium border border-slate-200 dark:border-slate-800 z-50 white-space-nowrap">
                                     Sign Out
                                 </div>
                             )}
@@ -176,7 +176,7 @@ const Footer = () => {
 
                         <button
                             onClick={toggleCollapse}
-                            className={`flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors w-full ${
+                            className={`flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:bg-slate-800/50 hover:text-slate-800 dark:text-slate-200 transition-colors w-full ${
                                 isCollapsed ? 'justify-center' : ''
                             }`}
                             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -193,7 +193,7 @@ const Footer = () => {
             </aside>
 
             {/* Mobile / Tablet Bottom Navigation Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800/80 z-30 flex items-center justify-around px-4 md:hidden pb-safe">
+            <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800/80 z-30 flex items-center justify-around px-4 md:hidden pb-safe">
                 {mobileNavItems.map((item, idx) => {
                     const active = isActive(item.path);
 
@@ -215,7 +215,7 @@ const Footer = () => {
                             key={item.path}
                             to={item.path}
                             className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-150 ${
-                                active ? 'text-brand-400' : 'text-slate-400'
+                                active ? 'text-brand-400' : 'text-slate-600 dark:text-slate-400'
                             }`}
                         >
                             <item.icon 
