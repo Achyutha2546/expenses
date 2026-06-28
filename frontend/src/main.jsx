@@ -1,8 +1,6 @@
 import { StrictMode, Component } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
 import App from './App.jsx'
-
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -21,9 +19,9 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', backgroundColor: '#fee2e2', color: '#991b1b', height: '100vh', overflow: 'auto' }}>
+        <div>
           <h2>Application Error</h2>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
+          <details>
             <summary>{this.state.error && this.state.error.toString()}</summary>
             <br />
             {this.state.errorInfo && this.state.errorInfo.componentStack}
