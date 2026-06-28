@@ -1,11 +1,1 @@
-/* ============================================================
-   APP.CSS — Root element styles only
-   All design tokens, components, and layout live in
-   the modular CSS files imported by index.css
-   ============================================================ */
-
-#root {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
+/* All CSS removed */
