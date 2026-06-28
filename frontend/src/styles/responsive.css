@@ -1,0 +1,423 @@
+/* ============================================================
+   RESPONSIVE.CSS — Breakpoint System & Adaptive Layouts
+   Expense Tracker PWA
+   Mobile-first: 320 → 375 → 425 → 768 → 1024 → 1440px
+   ============================================================ */
+
+/* ============================================================
+   320px — Very small phones (Galaxy S5, older iPhones)
+   ============================================================ */
+@media (max-width: 360px) {
+  :root {
+    --text-3xl: 1.6rem;
+    --text-2xl: 1.3rem;
+  }
+
+  .container {
+    padding: var(--space-4) var(--space-4) 110px;
+  }
+
+  .balance-amount {
+    font-size: 1.9rem;
+  }
+
+  .balance-card {
+    height: 195px;
+    border-radius: 36px;
+    padding: var(--space-6);
+  }
+
+  .shortcuts-grid {
+    gap: var(--space-3);
+  }
+
+  .stat-mini-grid {
+    gap: var(--space-3);
+  }
+
+  .stat-mini-amount {
+    font-size: var(--text-base);
+  }
+
+  .fab {
+    width: 54px;
+    height: 54px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .auth-card {
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .pin-pad-btn {
+    width: 62px;
+    height: 62px;
+    font-size: var(--text-xl);
+  }
+}
+
+/* ============================================================
+   375px — iPhone SE, standard mobile baseline
+   ============================================================ */
+@media (min-width: 361px) and (max-width: 400px) {
+  .balance-amount {
+    font-size: 2.1rem;
+  }
+
+  .container {
+    padding: var(--space-5) var(--space-5) 115px;
+  }
+}
+
+/* ============================================================
+   425px — Large mobile, iPhone Pro
+   ============================================================ */
+@media (min-width: 401px) and (max-width: 480px) {
+  .balance-amount {
+    font-size: 2.4rem;
+  }
+
+  .shortcuts-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ============================================================
+   640px — Small tablet, large phone landscape
+   ============================================================ */
+@media (min-width: 640px) {
+  .container {
+    padding: var(--space-8) var(--space-6) 120px;
+  }
+
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-left: 1px solid var(--border-card);
+    border-right: 1px solid var(--border-card);
+  }
+
+  .stat-mini-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .shortcuts-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .hero-title {
+    font-size: 3rem;
+  }
+
+  .balance-card {
+    height: 240px;
+  }
+
+  .balance-amount {
+    font-size: 2.7rem;
+  }
+}
+
+/* ============================================================
+   768px — Tablet portrait
+   ============================================================ */
+@media (min-width: 768px) {
+  .container {
+    max-width: 680px;
+    padding: var(--space-10) var(--space-8) 120px;
+  }
+
+  /* Desktop grid layout for dashboard */
+  .dashboard-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+  }
+
+  /* Show sidebar on tablets (if we ever add one) */
+  .shortcuts-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+  }
+
+  .stat-mini-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Hero */
+  .hero-title {
+    font-size: 3.6rem;
+  }
+
+  .hero-cta-group {
+    flex-direction: row;
+  }
+
+  /* Feature cards */
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Settings two-col */
+  .settings-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+  }
+
+  /* Analytics larger charts */
+  .chart-card {
+    padding: var(--space-6);
+  }
+
+  /* Modal bottom sheet → centered on tablets */
+  .modal-content {
+    border-radius: var(--radius-xl);
+  }
+}
+
+/* ============================================================
+   1024px — Desktop / Laptop
+   ============================================================ */
+@media (min-width: 1024px) {
+  /* App max-width container */
+  .app-root {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Desktop layout: left sidebar + main content */
+  .desktop-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100dvh;
+    gap: 0;
+  }
+
+  /* Desktop sidebar */
+  .desktop-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    background: var(--card);
+    border-right: 1px solid var(--border-card);
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6) var(--space-4);
+    overflow-y: auto;
+  }
+
+  /* Hide bottom nav on desktop */
+  .bottom-nav {
+    display: none;
+  }
+
+  /* Main content area */
+  .desktop-main {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .container {
+    max-width: 720px;
+    padding-bottom: var(--space-12);
+  }
+
+  /* Hero */
+  .hero-title {
+    font-size: 4.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-xl);
+  }
+
+  /* Features grid */
+  .features-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Dashboard in two columns on wider screens */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  /* Balance card wider */
+  .balance-card {
+    height: 260px;
+  }
+
+  /* Stat cards 4-up */
+  .stat-mini-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ============================================================
+   1440px — Large Desktop
+   ============================================================ */
+@media (min-width: 1440px) {
+  .hero-title {
+    font-size: 5rem;
+  }
+
+  .landing-nav,
+  .hero-section,
+  .features-section,
+  .cta-section .cta-inner {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+/* ============================================================
+   SAFE AREA INSETS (Notch / Home Indicator)
+   ============================================================ */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+  }
+
+  .container {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 110px);
+  }
+}
+
+/* ============================================================
+   DARK MODE — Media Query (for users without manual toggle)
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg:                hsl(229, 84%, 5%);
+    --bg-secondary:      hsl(224, 71%, 9%);
+    --bg-dark:           var(--bg);
+    --card:              hsl(222, 47%, 11%);
+    --card-hover:        hsl(220, 40%, 14%);
+    --glass:             rgba(17, 24, 39, 0.90);
+    --glass-border:      rgba(255, 255, 255, 0.08);
+    --glass-highlight:   rgba(255, 255, 255, 0.06);
+    --bg-card:           var(--card);
+    --bg-card-hover:     var(--card-hover);
+    --text-primary:      hsl(210, 40%, 96%);
+    --text-secondary:    hsl(215, 20%, 65%);
+    --text-muted:        hsl(215, 16%, 47%);
+    --border:            rgba(255, 255, 255, 0.07);
+    --border-strong:     rgba(255, 255, 255, 0.13);
+    --border-card:       rgba(255, 255, 255, 0.06);
+    --income-light:      rgba(16, 185, 129, 0.12);
+    --expense-light:     rgba(244, 63, 94, 0.12);
+    --warning-light:     rgba(245, 158, 11, 0.12);
+    --info-light:        rgba(14, 165, 233, 0.12);
+    --primary-light:     rgba(99, 102, 241, 0.12);
+    --shadow-xs:         0 1px 2px rgba(0,0,0,0.3);
+    --shadow-sm:         0 2px 8px rgba(0,0,0,0.4);
+    --shadow-md:         0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg:         0 12px 32px rgba(0,0,0,0.55);
+    --shadow-xl:         0 24px 48px rgba(0,0,0,0.6);
+    --shadow-premium:    0 32px 64px rgba(0,0,0,0.65);
+  }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  .bottom-nav,
+  .fab,
+  .sync-indicator,
+  .push-notification-toast,
+  .toast-container {
+    display: none !important;
+  }
+
+  .container {
+    padding-bottom: 0;
+    max-width: 100%;
+  }
+
+  .glass-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+/* ============================================================
+   REDUCE MOTION (Accessibility)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .fab::after,
+  .balance-card-orb,
+  .hero-blob {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   HIGH CONTRAST (Accessibility)
+   ============================================================ */
+@media (prefers-contrast: high) {
+  :root {
+    --border: rgba(0, 0, 0, 0.3);
+    --border-strong: rgba(0, 0, 0, 0.5);
+  }
+
+  [data-theme='dark'] {
+    --border: rgba(255, 255, 255, 0.25);
+    --border-strong: rgba(255, 255, 255, 0.45);
+  }
+
+  .glass-card {
+    border-width: 2px;
+  }
+
+  .btn-primary {
+    outline: 2px solid transparent;
+  }
+
+  .btn-primary:focus-visible {
+    outline-color: var(--primary);
+  }
+}
+
+/* ============================================================
+   LANDSCAPE MOBILE
+   ============================================================ */
+@media (max-height: 600px) and (orientation: landscape) {
+  .bottom-nav {
+    padding: 6px 0;
+  }
+
+  .container {
+    padding-bottom: 80px;
+  }
+
+  .balance-card {
+    height: 170px;
+  }
+
+  .hero-section {
+    padding-top: var(--space-10);
+  }
+}
